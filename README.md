@@ -1,25 +1,25 @@
 #### Simple programming languages
 
-1;  // Integer
-1 / 2;  // Rational
+![Yeah, this is bubble](/icon.png?s=200)
 
-4.0;  // Irrational
+Created for educational purposes.
+Dynamically typed imperative language with first-class functions.
 
-foo = 100;  // Assign
-{foo = 200; bar = 300;}  // Block, shadowing and destroying
+Supported values:
+* number (integer, double, rational)
+* bool (`true` and `false`)
+* `null`
+* closures (all functions are first-class and support clojuring)
 
-display(123);  // Function call and 
-// display(bar);  // This is not allowed because bar is destroyed over here
+Basic features:
+* Recursion (via `self`)
+* If expression
+* While loop
+* Lambdas and chained calls
 
-function() {return 123;}  // Function without env
-function() {return foo;}  // Closure
-foo = function() return foo;  // Clojure and assigning, foo now function
+Some more specific examples could be found in the [examples](examples) directory.
 
-null;  // Null value
 
 TODO:
 * nonlocal keyword;  -> LATER
 * recursion ? (now done with `self` keyword)
-
-
-Example: fibonacci computing
