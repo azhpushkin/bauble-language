@@ -1,0 +1,19 @@
+fibonacciRecursive = function(n) {
+    if (n < 2)
+        return n;
+    else return (self (n - 1) + self (n - 2));
+}
+
+fibonacciIterative = function(n) {
+    if (n < 2) return n;
+
+    i = 0;
+    k = j = 1;
+    while (k <= n) {
+        t = i + j;
+        i = j;
+        j = t;
+        k = k + 1;
+    }
+    return j;
+}
