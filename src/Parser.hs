@@ -102,7 +102,6 @@ checkNextCalls call = do
     Just args -> do nextCall <- checkNextCalls (Call call args)
                     return nextCall
 
-
 callExpr = do
   callable <- callableExpr'
   args <- parens $ commaSep simpleExpr
@@ -117,15 +116,9 @@ assignExpr = do
   return $ Assign var someExpr
 
 functionExpr = do
-  let
-    returnExpr = do
-      reserved "return"
-      stmt <- simpleExpr
-      return $ Return stmt
-
   reserved "function"
   args <- parens $ commaSep identifier
-  body <- blockExpr (try expr <|> try returnExpr)
+  body <- blockExpr exprWithinFunc
   return $ Function args body
 
 simpleExpr =  try assignExpr
@@ -139,19 +132,19 @@ simpleExpr =  try assignExpr
 -- ### FLOW EXPRESSIONS ###
 -- ########################
 
-ifExpr = do
+ifExpr possibleExpr = do
   reserved "if"
   conditional <- parens simpleExpr
-  trueBranch <- blockExpr expr
-  falseBranch <- optionMaybe (reserved "else" >> blockExpr expr)
+  trueBranch <- blockExpr possibleExpr
+  falseBranch <- optionMaybe (reserved "else" >> blockExpr possibleExpr)
   return $ If conditional trueBranch falseBranch
 
-whileExpr = do
+whileExpr possibleExpr = do
   let continue = reserved "continue" >> return Continue
   let break = reserved "break" >> return Break
   reserved "while"
   conditional <- parens simpleExpr
-  body <- blockExpr (try expr <|> try continue <|> try break)
+  body <- blockExpr (try possibleExpr <|> try continue <|> try break)
   return $ While conditional body
 
 printableExpr :: Parser (Either Expr String)
@@ -166,8 +159,8 @@ printExpr = do
   args <- parens $ commaSep printableExpr
   return $ Print args
 
-flowExpr =  try ifExpr
-        <|> try whileExpr
+flowExpr =  try (ifExpr expr)
+        <|> try (whileExpr expr)
         <|> try printExpr
 
 -- ############################
@@ -183,6 +176,21 @@ endsWithBlock _              = False
 -- General parser to check all expressions available on top-level
 expr :: Parser Expr
 expr = try simpleExpr <|> try flowExpr
+
+-- Inside of function return and unlocal could be used
+-- So extended expressions set should be used
+returnExpr = do
+  reserved "return"
+  stmt <- simpleExpr
+  return $ Return stmt
+
+flowExprWithinFunc =  try (ifExpr exprWithinFunc)
+                  <|> try (whileExpr exprWithinFunc)
+                  <|> try printExpr
+
+exprWithinFunc =  try simpleExpr
+              <|> try returnExpr
+              <|> try flowExprWithinFunc
 
 -- Parser modificator that ensures what expressions should end with semicolon on top-level
 ensureSemi :: Parser Expr -> Parser Expr
