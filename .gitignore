@@ -1,0 +1,6 @@
+.stack-work/
+bauble.cabal
+*~
+
+.idea/
+out/
