@@ -18,7 +18,6 @@ null;  // Null value
 TODO:
 * nonlocal keyword;  -> LATER
 * recursion ? (now done with `self` keyword)
-* never {} after `;`
 * pass parser for block funcs
 
 
