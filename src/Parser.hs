@@ -145,9 +145,11 @@ ifExpr = do
   return $ If conditional trueBranch falseBranch
 
 whileExpr = do
+  let continue = reserved "continue" >> return Continue
+  let break = reserved "break" >> return Break
   reserved "while"
   conditional <- parens simpleExpr
-  body <- blockExpr
+  body <- braces $ toplevelProducer (try expr <|> try continue <|> try break)
   return $ While conditional body
 
 flowExpr =  try ifExpr

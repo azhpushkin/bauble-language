@@ -16,13 +16,18 @@ data Value = Integer Integer
 data Expr = Value Value
           | Variable String
           | Assign String Expr
+
+          | Call Expr [Expr]
           | Function [String] [Expr]  -- Defining a function
+          | Return Expr  -- Only inside of Function
+
           | BinOperator BinOperator Expr Expr
           | UnOperator UnOperator Expr
           | If Expr [Expr] (Maybe [Expr])
+
           | While Expr [Expr]
-          | Return Expr
-          | Call Expr [Expr]
+          | Continue  -- Only inside of While
+          | Break  -- Only inside of While
           deriving (Show, Ord, Eq)
 
 data BinOperator = Plus
