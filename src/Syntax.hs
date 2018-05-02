@@ -19,7 +19,7 @@ data Expr = Value Value
           | Function [String] [Expr]  -- Defining a function
           | BinOperator BinOperator Expr Expr
           | UnOperator UnOperator Expr
-          | If Expr [Expr] [Expr]
+          | If Expr [Expr] (Maybe [Expr])
           | While Expr [Expr]
           | Return Expr
           | Call Expr [Expr]

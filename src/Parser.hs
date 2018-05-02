@@ -141,8 +141,7 @@ ifExpr = do
   reserved "if"
   conditional <- parens simpleExpr
   trueBranch <- blockExpr
-  reserved "else"
-  falseBranch <- blockExpr
+  falseBranch <- optionMaybe (reserved "else" >> blockExpr)
   return $ If conditional trueBranch falseBranch
 
 whileExpr = do

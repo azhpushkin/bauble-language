@@ -16,7 +16,5 @@ foo = function() return foo;  // Clojure and assigning, foo now function
 null;  // Null value
 
 TODO:
-* nonlocal keyword;
-* calls like x() () should be allowed, or not?
-* optional 'else' block
+* nonlocal keyword;  -> LATER
 * continue and break
