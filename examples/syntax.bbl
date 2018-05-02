@@ -41,13 +41,3 @@ if (true) // empty does not allowed
 { } // empty allowed
 // else can be missed
 
-while (true) // empty does not allowed
-{
-  x = x + 1;
-  if (x < 10)  {
-      continue;
-  }
-  else {
-      break;
-  }
-
