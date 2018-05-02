@@ -16,6 +16,5 @@ foo = function() return foo;  // Clojure and assigning, foo now function
 null;  // Null value
 
 TODO:
-* bools
-* lists (better mutable)
-* null 
+* nonlocal keyword;
+* calls like x() () should be allowed, or not?

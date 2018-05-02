@@ -11,3 +11,5 @@ process line = do
     Left err -> print err
     Right ex -> mapM_ print ex
 
+parse = parseToplevel
+

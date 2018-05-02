@@ -10,18 +10,18 @@ import Lexer
 import Syntax
 
 -- TODO try to change AssocLeft to AssocNone
-binary s f = Ex.Infix (reservedOp s >> return (BinOperator f)) Ex.AssocLeft
+binary s f assoc = Ex.Infix (reservedOp s >> return (BinOperator f)) assoc
 unary s f = Ex.Prefix (reservedOp s >> return (UnOperator f))
 
 numberOperatorsTable = [ [unary "-" Negate]
-                       , [binary "*" Multiply, binary "/" Divide]
-                       , [binary "+" Plus, binary "-" Minus]
-                       , [binary "<" Less, binary "<=" LessOrEqual
-                         ,binary "<" Greater, binary "<" GreaterOrEqual
-                         ,binary "==" Equal, binary "!=" NotEqual] ]
+                       , [binary "*" Multiply Ex.AssocLeft, binary "/" Divide Ex.AssocLeft]
+                       , [binary "+" Plus Ex.AssocLeft, binary "-" Minus Ex.AssocLeft]
+                       , [binary "<" Less Ex.AssocNone, binary "<=" LessOrEqual Ex.AssocNone
+                         ,binary "<" Greater Ex.AssocNone, binary "<" GreaterOrEqual Ex.AssocNone
+                         ,binary "==" Equal Ex.AssocNone, binary "!=" NotEqual Ex.AssocNone] ]
 
 boolOperatorsTable = [ [unary "not" Not]
-                     , [binary "and" And, binary "or" Or] ]
+                     , [binary "and" And Ex.AssocLeft, binary "or" Or Ex.AssocLeft] ]
 
 operatorsTable = numberOperatorsTable ++ boolOperatorsTable
 
@@ -55,70 +55,87 @@ nullValue = do
 value :: Parser Expr
 value =  try doubleValue
      <|> try integerValue
-     <|> trueValue
-     <|> falseValue
-     <|> nullValue
+     <|> try trueValue
+     <|> try falseValue
+     <|> try nullValue
 
 variable = Variable <$> identifier
 
 assign = do
   var <- identifier
   reservedOp "="
-  someExpr <- expr
+  someExpr <- simpleExpr
   return $ Assign var someExpr
+
+returnExpr = do
+  reserved "return"
+  stmt <- simpleExpr
+  reservedOp ";"
+  return $ Return stmt
 
 function = do
   reserved "function"
   args <- parens $ commaSep identifier
-  body <- braces $ endBy expr semi
+  body <- braces $ many (try anyExpr <|> try returnExpr)
   return $ Function args body
 
-operatorExpr = Ex.buildExpressionParser operatorsTable expr
+operatorExpr = Ex.buildExpressionParser operatorsTable simpleExpr'
 
 ifExpr = do
   reserved "if"
-  conditional <- expr
-  trueBranch <- braces $ endBy expr semi
-  falseBranch <- braces $ endBy expr semi
+  conditional <- parens simpleExpr
+  trueBranch <- braces toplevel
+  reserved "else"
+  falseBranch <- braces toplevel
   return $ If conditional trueBranch falseBranch
 
 whileExpr = do
   reserved "while"
-  conditional <- expr
-  body <- braces $ endBy expr semi
+  conditional <- anyExpr
+  body <- braces toplevel
   return $ While conditional body
-
-returnExpr = do
-  reserved "return"
-  stmt <- expr
-  return $ Return stmt
 
 -- Function call
 
 call :: Parser Expr
 call = do
-  callable <- parens $ function <|> variable
-  args <- parens $ commaSep expr
+  callable <- try variable <|> try (parens function)
+  args <- parens $ commaSep simpleExpr
   return $ Call callable args
 
--- General expression parser
 
-expr :: Parser Expr
---expr = try value
---    <|> try assign
---    <|> try function
---    <|> try operatorExpr
---    <|> try ifExpr
---    <|> try whileExpr
---    <|> try returnExpr
---    <|> try call
-expr = value
+-- Helper parser for operators table
+simpleExpr' =  try function
+           <|> try call
+           <|> try variable
+           <|> try value
+           <|> try (parens operatorExpr)
+
+-- Expressions that can be returned
+simpleExpr =  try operatorExpr
+          <|> try simpleExpr'
+          <|> try (parens simpleExpr')
+
+-- Flow expressions
+flowExpr = try assign
+       <|> try whileExpr
+       <|> try ifExpr
+
+anyExpr :: Parser Expr
+anyExpr = do
+  newExpr <- try flowExpr <|>
+             try operatorExpr <|>
+             try simpleExpr
+  case newExpr of
+       Function _ _ -> return newExpr
+       While _ _    -> return newExpr
+       If _ _ _     -> return newExpr
+       _            -> do reservedOp ";"
+                          return newExpr
 
 toplevel :: Parser [Expr]
-toplevel = many $ do
-    newExpr <- expr
-    reservedOp ";"
-    return newExpr
+toplevel = many anyExpr
+
 
 contents :: Parser a -> Parser a
 contents p = do
