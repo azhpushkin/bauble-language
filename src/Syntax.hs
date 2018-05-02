@@ -28,6 +28,8 @@ data Expr = Value Value
           | While Expr [Expr]
           | Continue  -- Only inside of While
           | Break  -- Only inside of While
+
+          | Print [Expr]
           deriving (Show, Ord, Eq)
 
 data BinOperator = Plus

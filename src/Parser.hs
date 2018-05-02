@@ -123,7 +123,7 @@ functionExpr = do
 
   reserved "function"
   args <- parens $ commaSep identifier
-  body <- braces $ toplevelProducer (try expr <|> try returnExpr)
+  body <- blockExpr (try expr <|> try returnExpr)
   return $ Function args body
 
 simpleExpr =  try assignExpr
@@ -140,8 +140,8 @@ simpleExpr =  try assignExpr
 ifExpr = do
   reserved "if"
   conditional <- parens simpleExpr
-  trueBranch <- blockExpr
-  falseBranch <- optionMaybe (reserved "else" >> blockExpr)
+  trueBranch <- blockExpr expr
+  falseBranch <- optionMaybe (reserved "else" >> blockExpr expr)
   return $ If conditional trueBranch falseBranch
 
 whileExpr = do
@@ -149,22 +149,29 @@ whileExpr = do
   let break = reserved "break" >> return Break
   reserved "while"
   conditional <- parens simpleExpr
-  body <- braces $ toplevelProducer (try expr <|> try continue <|> try break)
+  body <- blockExpr (try expr <|> try continue <|> try break)
   return $ While conditional body
+
+printExpr = do
+  reserved "print"
+  args <- parens $ commaSep simpleExpr
+  return $ Print args
 
 flowExpr =  try ifExpr
         <|> try whileExpr
+        <|> try printExpr
 
 -- ############################
 -- ### TOPLEVEL EXPRESSIONS ###
 -- ############################
 
-blockExpr :: Parser [Expr]
-blockExpr = braces toplevel
+-- General parser to check all expressions available on top-level
+expr :: Parser Expr
+expr = try simpleExpr <|> try flowExpr
 
-toplevel = toplevelProducer expr
-
-toplevelProducer exprParser = many $ do
+-- Parser modificator that ensures what expressions should end with semicolon on top-level
+ensureSemi :: Parser Expr -> Parser Expr
+ensureSemi exprParser = do
   newExpr <- exprParser
   case newExpr of
     While _ _ -> return newExpr
@@ -173,11 +180,19 @@ toplevelProducer exprParser = many $ do
     _ -> do reservedOp ";"
             return newExpr
 
+-- Parses many expressions of given parser with correct semicolons
+toplevelProducer :: Parser Expr -> Parser [Expr]
+toplevelProducer = many . ensureSemi
 
-expr :: Parser Expr
-expr = try simpleExpr <|> try flowExpr
+-- Blocks ( { } ) parsers for given allowed expressions
+blockExpr exprParser =  try (braces $ toplevelProducer exprParser)
+                    <|> try (blockExprAsSingle $ ensureSemi exprParser)
 
+-- Helper function to allow single expression as block
+blockExprAsSingle :: Parser Expr -> Parser [Expr]
+blockExprAsSingle exprParser = (\expr -> [expr]) <$> exprParser
 
+-- Handle of whitespaces and EOF
 contents :: Parser a -> Parser a
 contents p = do
   whiteSpace
@@ -185,8 +200,9 @@ contents p = do
   eof
   return r
 
-parseToplevel :: String -> Either ParseError [Expr]-- Toplevel applies
-parseToplevel s = parse (contents toplevel) "<stdin>" s
+-- Parse given string or return an error
+parseToplevel :: String -> Either ParseError [Expr]
+parseToplevel s = parse (contents $ toplevelProducer expr) "<stdin>" s
 
 
 
