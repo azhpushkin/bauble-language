@@ -18,3 +18,5 @@ null;  // Null value
 TODO:
 * nonlocal keyword;
 * calls like x() () should be allowed, or not?
+* optional 'else' block
+* continue and break
