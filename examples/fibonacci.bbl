@@ -2,8 +2,7 @@ fibonacciRecursive = function(n) {
     if (n < 2)
         return n;
     else
-    return self;
-    	//return (self (n - 1) + self (n - 2));
+        return (self (n - 1) + self (n - 2));
 }
 
 fibonacciIterative = function(n) {

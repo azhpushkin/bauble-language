@@ -81,10 +81,10 @@ operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
-operandExpr' =  try atomicExpr
-             <|> try callExpr
-             <|> try (parens operatorExpr)
-             <|> try (parens operandExpr')
+operandExpr' =  try callExpr
+            <|> try atomicExpr
+            <|> try (parens operatorExpr)
+            <|> try (parens operandExpr')
 
 
 -- Everything that possible could be called: everything but not assign or operatorExpr
