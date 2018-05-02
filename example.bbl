@@ -1,0 +1,42 @@
+100;
+const = 100;
+function (x, y, z) { 42; }
+
+one = (function (x, y) { return x / y; }) (const, 100);
+
+
+// This is a one-line comment
+dontChange(100);
+
+main = function () {
+    dontChange(100);
+};
+
+dontChange = function (x) {
+    /*
+        This looks complicated,
+        but function returns the number itself
+    */
+
+    y = x - 100;
+    z = y + 100;
+    if (y < z and y == y)  // This is always true, > and != also exist
+    { z = z * one; }
+    else { z = 0; }
+
+    // If *if* expression is last one it return value is also return value of func
+    // Return value of *assign* expression is value of expr on the left
+    // so for a = b = 1 + 2
+    // a = (b = 1 + 2) -> (b = 1 + 2) returns 3
+    // a = 3 -> returns 3 too
+    return z;
+
+};
+
+
+one = 999;  //  This should not affect dontChange (closure behaviour)
+
+main = function () {
+    dontChange(100);
+};
+
