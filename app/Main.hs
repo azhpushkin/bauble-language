@@ -6,6 +6,8 @@ import Control.Monad.Trans
 import System.Environment
 import System.Console.Haskeline
 
+import Text.Pretty.Simple (pPrint)
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -29,5 +31,5 @@ runREPL = runInputT defaultSettings loop
 parseFile file = do
   program  <- readFile file
   case parse program of
-    Left e  -> print e >> fail "parse error"
-    Right r -> print r >> return r
+    Left e  -> pPrint e >> fail "parse error"
+    Right r -> pPrint r >> return r

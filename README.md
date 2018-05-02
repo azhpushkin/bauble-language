@@ -18,8 +18,6 @@ null;  // Null value
 TODO:
 * nonlocal keyword;  -> LATER
 * recursion ? (now done with `self` keyword)
-* pass parser for block funcs
-
 
 
 Example: fibonacci computing
