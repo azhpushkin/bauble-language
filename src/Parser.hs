@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 module Parser where
 
 import Text.Parsec
@@ -152,9 +154,16 @@ whileExpr = do
   body <- blockExpr (try expr <|> try continue <|> try break)
   return $ While conditional body
 
+printableExpr :: Parser (Either Expr String)
+printableExpr = do
+  maybeMsg <- optionMaybe stringLiteral
+  case maybeMsg of
+    Just msg -> return $ Right msg
+    Nothing -> Left <$> simpleExpr
+
 printExpr = do
   reserved "print"
-  args <- parens $ commaSep simpleExpr
+  args <- parens $ commaSep printableExpr
   return $ Print args
 
 flowExpr =  try ifExpr
@@ -165,6 +174,12 @@ flowExpr =  try ifExpr
 -- ### TOPLEVEL EXPRESSIONS ###
 -- ############################
 
+endsWithBlock :: Expr -> Bool
+endsWithBlock (While _ _)    = True
+endsWithBlock (If _ _ _)     = True
+endsWithBlock (Function _ _) = True
+endsWithBlock _              = False
+
 -- General parser to check all expressions available on top-level
 expr :: Parser Expr
 expr = try simpleExpr <|> try flowExpr
@@ -174,11 +189,10 @@ ensureSemi :: Parser Expr -> Parser Expr
 ensureSemi exprParser = do
   newExpr <- exprParser
   case newExpr of
-    While _ _ -> return newExpr
-    If _ _ _ ->return newExpr
-    Function _ _ ->return newExpr
-    _ -> do reservedOp ";"
-            return newExpr
+    (endsWithBlock -> True)          -> return newExpr
+    Assign _ (endsWithBlock -> True) -> return newExpr
+    Return   (endsWithBlock -> True) -> return newExpr
+    _                                -> (reservedOp ";" >> return newExpr)
 
 -- Parses many expressions of given parser with correct semicolons
 toplevelProducer :: Parser Expr -> Parser [Expr]

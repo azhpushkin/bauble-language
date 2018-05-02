@@ -16,7 +16,8 @@ lexer = Tok.makeTokenParser languageDef
     names = ["true", "false", "null",  -- predefined values
              "if", "else",  -- if-expression
              "function", "return",  -- function declaration
-             "while", "break", "continue"]  -- while-expression
+             "while", "break", "continue",
+             "print", "self"]  -- while-expression
     languageDef = emptyDef {
                 Tok.commentLine = "//"
               , Tok.commentStart = "/*"
@@ -29,6 +30,7 @@ lexer = Tok.makeTokenParser languageDef
 
 integer = Tok.integer lexer
 float = Tok.float lexer
+stringLiteral = Tok.stringLiteral lexer
 
 identifier = Tok.identifier lexer
 
