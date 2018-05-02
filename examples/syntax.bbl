@@ -26,14 +26,14 @@ dontChange = function (x) {
     // a = 3 -> returns 3 too
     return z;
 
-};
+}
 
 
 one = 999;  //  This should not affect dontChange (closure behaviour)
 
 main = function () {
     dontChange(100);
-};
+}
 
 
 
