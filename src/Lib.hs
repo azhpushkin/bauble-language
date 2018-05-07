@@ -1,8 +1,10 @@
 module Lib where
 
-import Parser
-
 import Text.Pretty.Simple (pPrint)
+
+import Syntax
+import Parser
+import Eval
 
 
 process :: String -> IO ()
@@ -14,3 +16,4 @@ process line = do
 
 parse = parseToplevel
 
+runExpressions exprs = runInterpret emptyEnv exprs >> return ()
