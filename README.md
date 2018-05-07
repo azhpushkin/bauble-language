@@ -21,5 +21,24 @@ Some more specific examples could be found in the [examples](examples) directory
 
 
 TODO:
-* nonlocal keyword;  -> LATER
 * recursion ? (now done with `self` keyword)
+* rational numbers
+* arrays
+* imports?
+* fix `return` inside `if` and `while` blocks
+* refactor error-handling
+* Write down Backus-Naur form
+* optimize closures
+* change self, print etc as a predetermined functions (reserved names)
+
+
+
+
+Thoughts:
+* print and self can have `reserved functions` type in the Value datatype `Value`
+
+
+#### Some notes
+* All expressions are returning values (even while loops and ifs), they are
+considered as flow-control expressions and does not allowed in 
+assignment, return statements etc

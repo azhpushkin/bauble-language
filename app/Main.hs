@@ -11,12 +11,26 @@ import Text.Pretty.Simple (pPrint)
 main :: IO ()
 main = do
   args <- getArgs
+  print args
   case args of
-    [] -> runREPL
-    [fname] -> parseFile fname >> return ()
+    ["repl"]      -> runREPL
+    ["ast"]       -> runASTDebug
+    [fname]       -> parseFile fname >> return ()
+    _             -> help
 
-runREPL :: IO ()
-runREPL = runInputT defaultSettings loop
+help :: IO ()
+help = putStr $ unlines
+    [ "Usage: bauble [cmd | pathToFile]"
+    , ""
+    , "Commands:"
+    , "  help      show this help text"
+    , "  repl      start REPL"
+    , "  ast       start REPL for AST debugging"
+    ]
+
+
+runASTDebug :: IO ()
+runASTDebug = runInputT defaultSettings loop
   where
   loop = do
     minput <- getInputLine "ready> "
@@ -25,11 +39,16 @@ runREPL = runInputT defaultSettings loop
       Just input -> (liftIO $ process input) >> loop
 
 
---processFile :: String -> IO ()
---processFile fname = readFile fname >>= parse >> return ()
+runREPL :: IO()
+runREPL = runASTDebug
+
 
 parseFile file = do
   program  <- readFile file
   case parse program of
     Left e  -> pPrint e >> fail "parse error"
-    Right r -> pPrint r >> return r
+    Right exprs -> do
+      putStrLn $ "----- Running " ++ file ++ " -----"
+      runExpressions exprs
+      putStrLn $ "---------- END ----------"
+

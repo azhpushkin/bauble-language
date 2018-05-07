@@ -1,10 +1,10 @@
 module Syntax where
 
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 
 
 data Value = Integer Integer
-           | Rational (Integer, Integer)  -- Cannot be directly created
+           -- | Rational (Integer, Integer)  -- Cannot be directly created
            | Double Double
            | Boolean Bool
            | Closure (Map.Map String Value) [String] [Expr]  -- Closure is not created directly
