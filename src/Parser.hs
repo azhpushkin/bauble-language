@@ -142,6 +142,7 @@ ifExpr possibleExpr = do
 whileExpr possibleExpr = do
   let continue = reserved "continue" >> return Continue
   let break = reserved "break" >> return Break
+
   reserved "while"
   conditional <- parens simpleExpr
   body <- blockExpr (try possibleExpr <|> try continue <|> try break)
@@ -181,7 +182,7 @@ expr = try simpleExpr <|> try flowExpr
 -- So extended expressions set should be used
 returnExpr = do
   reserved "return"
-  stmt <- simpleExpr
+  stmt <- optionMaybe simpleExpr
   return $ Return stmt
 
 flowExprWithinFunc =  try (ifExpr exprWithinFunc)
@@ -199,7 +200,6 @@ ensureSemi exprParser = do
   case newExpr of
     (endsWithBlock -> True)          -> return newExpr
     Assign _ (endsWithBlock -> True) -> return newExpr
-    Return   (endsWithBlock -> True) -> return newExpr
     _                                -> (reservedOp ";" >> return newExpr)
 
 -- Parses many expressions of given parser with correct semicolons

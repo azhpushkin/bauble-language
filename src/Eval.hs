@@ -114,9 +114,10 @@ runExprsInFunc :: Env -> [Expr] -> IO (Value)
 runExprsInFunc env exprs = do
   case exprs of
     [] -> return Null
-    (Return expr):_ -> do
+    (Return (Just expr)):_ -> do
       (value, _) <- evalExpr env expr
       return value
+    (Return Nothing):_ -> return Null
     expr:exprs' -> do
       (value, newEnv) <- evalExpr env expr
       res <- runExprsInFunc newEnv exprs'

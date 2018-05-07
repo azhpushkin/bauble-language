@@ -11,7 +11,6 @@ import Text.Pretty.Simple (pPrint)
 main :: IO ()
 main = do
   args <- getArgs
-  print args
   case args of
     ["repl"]      -> runREPL
     ["ast"]       -> runASTDebug

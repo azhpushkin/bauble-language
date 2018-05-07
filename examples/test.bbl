@@ -1,8 +1,7 @@
 print("asd");
 
 foo = function(x, y) {
-  return x + y;
+  if (true) return x + y;
 }
 
-print(foo * 2);
-print(foo);
+print(foo(1, 2));
