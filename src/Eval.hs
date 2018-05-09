@@ -66,20 +66,20 @@ evalExpr env (If cond trueExprs falseExprs) = do
     v -> fail $ "Non boolean value passed to if: " ++ show v
 
 
-evalExpr env (Print []) = putStrLn "" >> return (Null, env)
-evalExpr env (Print (expr:exprs)) = do
-  case expr of
-    Left expr -> do
-      (value, newEnv) <- evalExpr env expr
-      case value of
-        Closure _ args exprs -> putStr $ "<Closure with args " ++ show args ++ ">"
-        Integer i -> putStr $ "<Integer " ++ show i ++ ">"
-        Double d -> putStr $ "<Double " ++ show d ++ ">"
-        Boolean b -> putStr $ "<Boolean " ++ show b ++ ">"
-        Null -> putStr $ "<Null>"
-    Right str -> putStr str
-
-  evalExpr env (Print exprs)
+--evalExpr env (Print []) = putStrLn "" >> return (Null, env)
+--evalExpr env (Print (expr:exprs)) = do
+--  case expr of
+--    Left expr -> do
+--      (value, newEnv) <- evalExpr env expr
+--      case value of
+--        Closure _ args exprs -> putStr $ "<Closure with args " ++ show args ++ ">"
+----        Integer i -> putStr $ "<Integer " ++ show i ++ ">"
+--        Double d -> putStr $ "<Double " ++ show d ++ ">"
+--        Boolean b -> putStr $ "<Boolean " ++ show b ++ ">"
+--        Null -> putStr $ "<Null>"
+--    Right str -> putStr str
+--
+--  evalExpr env (Print exprs)
 
 evalExpr env (While cond exprs) = do
   (condValue, _) <- evalExpr env cond
