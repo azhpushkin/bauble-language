@@ -36,13 +36,30 @@ spec = do
       shouldFail "function() {self = 1;}"
       shouldFail "print = 1;"
 
-    it "Call could be operand of operator" $ do
+    it "Call could be right operand of operator" $ do
       "1 + some()" `shouldParseTo` [BinOperator Plus
                                                 (Value $ Number $ Integer 1)
                                                 (Call (Variable "some") [])]
-      "function() {1 + self();}" `shouldParseTo` [BinOperator Plus
-                                                              (Value $ Number $ Integer 1)
-                                                              (Call (BuiltinRef Self) [])]
-      "not foo();" `shouldParseTo` [UnOperator Not (Call (Variable "foo") [])]
 
+    it "Call could be left operand of operator" $ do
+      "some() + 1" `shouldParseTo` [BinOperator Plus
+                                                (Call (Variable "some") [])
+                                                (Value $ Number $ Integer 1)]
+
+    it "Call could be left operand of unary operators" $ do
+      "not foo();" `shouldParseTo` [UnOperator Not (Call (Variable "foo") [])]
+      "- foo();" `shouldParseTo` [UnOperator Negate (Call (Variable "foo") [])]
+
+    it "`self` could be operand of operator" $ do
+      "function() {1 + self();}" `shouldParseTo` [Function []
+                                                    [BinOperator Plus
+                                                                 (Value $ Number $ Integer 1)
+                                                                 (Call (BuiltinRef Self) [])]]
+      "function() {self() + 1;}" `shouldParseTo` [Function []
+                                                    [BinOperator Plus
+                                                                 (Call (BuiltinRef Self) [])
+                                                                 (Value $ Number $ Integer 1)]]
+
+      "function() {not self();}" `shouldParseTo` [Function []
+                                                    [UnOperator Not (Call (BuiltinRef Self) [])]]
 
