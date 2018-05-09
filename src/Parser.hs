@@ -20,25 +20,14 @@ import Syntax
 
 -- Values and identifiers
 
-integerValue = do
-  n <- integer
-  return $ Value $ Integer n
+-- integerValue = integer >>= (\i -> return $ Value $ Integer i)
+integerValue = (Value . Number . Integer) <$> integer
+doubleValue = (Value . Number . Double) <$> float
 
-doubleValue = do -- For parsec float is just alias of 'non-integer'
-  n <- float
-  return $ Value $ Double n
+falseValue = reserved "false" >> (return $ Value $ Boolean False)
+trueValue = reserved "true" >> (return $ Value $ Boolean True)
 
-trueValue = do
-  reserved "true"
-  return $ Value $ Boolean True
-
-falseValue = do
-  reserved "false"
-  return $ Value $ Boolean False
-
-nullValue = do
-  reserved "null"
-  return $ Value Null
+nullValue = reserved "null" >> (return $ Value Null)
 
 variable = Variable <$> identifier
 
@@ -99,15 +88,12 @@ checkNextCalls call = do
   nextArgs <- optionMaybe (parens $ commaSep simpleExpr)
   case nextArgs of
     Nothing   -> return $ call
-    Just args -> do nextCall <- checkNextCalls (Call call args)
-                    return nextCall
+    Just args -> do checkNextCalls (Call call args)
 
 callExpr = do
   callable <- callableExpr'
   args <- parens $ commaSep simpleExpr
-  let initialCall = (Call callable args)
-  nextCalls <- checkNextCalls initialCall
-  return nextCalls
+  checkNextCalls (Call callable args)
 
 assignExpr = do
   var <- identifier
@@ -139,13 +125,13 @@ ifExpr possibleExpr = do
   falseBranch <- optionMaybe (reserved "else" >> blockExpr possibleExpr)
   return $ If conditional trueBranch falseBranch
 
-whileExpr possibleExpr = do
+whileExpr updateExprs = do
   let continue = reserved "continue" >> return Continue
   let break = reserved "break" >> return Break
 
   reserved "while"
   conditional <- parens simpleExpr
-  body <- blockExpr (try possibleExpr <|> try continue <|> try break)
+  body <- blockExpr (updateExprs (try continue <|> try break))
   return $ While conditional body
 
 printableExpr :: Parser (Either Expr String)
@@ -157,8 +143,8 @@ printableExpr = do
 
 printExpr = do
   reserved "print"
-  args <- parens $ commaSep printableExpr
-  return $ Print args
+  return $ Value Null
+  -- Print <$> (parens $ commaSep printableExpr)
 
 flowExpr =  try (ifExpr expr)
         <|> try (whileExpr expr)
@@ -182,12 +168,11 @@ expr = try simpleExpr <|> try flowExpr
 -- So extended expressions set should be used
 returnExpr = do
   reserved "return"
-  stmt <- optionMaybe simpleExpr
-  return $ Return stmt
+  Return <$> (optionMaybe simpleExpr)
 
-flowExprWithinFunc =  try (ifExpr exprWithinFunc)
-                  <|> try (whileExpr exprWithinFunc)
-                  <|> try printExpr
+flowExprWithinFunc allowedExpr =  try (ifExpr exprWithinFunc)
+                              <|> try (whileExpr exprWithinFunc)
+                              <|> try printExpr
 
 exprWithinFunc =  try simpleExpr
               <|> try returnExpr
@@ -212,7 +197,7 @@ blockExpr exprParser =  try (braces $ toplevelProducer exprParser)
 
 -- Helper function to allow single expression as block
 blockExprAsSingle :: Parser Expr -> Parser [Expr]
-blockExprAsSingle exprParser = (\expr -> [expr]) <$> exprParser
+blockExprAsSingle exprParser = return <$> exprParser
 
 -- Handle of whitespaces and EOF
 contents :: Parser a -> Parser a
