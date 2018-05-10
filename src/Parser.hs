@@ -92,12 +92,19 @@ functionExpr = do
   body <- (blockExpr True False)
   return $ Function selfRef args body
 
-simpleExpr =  try assignExpr
+simpleExpr' =  try assignExpr
           <|> try operatorExpr
-          <|> try functionExpr
           <|> try lambdaExprCall
+          <|> try functionExpr
           <|> try atomicExpr
           <|> try (parens simpleExpr)
+
+simpleExpr = do
+  call <- simpleExpr'
+  case call of
+    Function _ _ _ -> return call
+    _ -> checkNextCalls call
+
 
 -- ########################
 -- ### FLOW EXPRESSIONS ###
