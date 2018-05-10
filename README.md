@@ -21,10 +21,7 @@ Some more specific examples could be found in the [examples](examples) directory
 
 
 TODO:
-* recursion ? (now done with `self` keyword)
 * rational numbers
-* arrays
-* imports?
 * fix `return` inside `if` and `while` blocks
 * refactor error-handling
 * Write down Backus-Naur form

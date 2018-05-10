@@ -37,17 +37,15 @@ runASTDebug = runInputT defaultSettings loop
       Nothing    -> outputStrLn "Goodbye."
       Just input -> (liftIO $ process input) >> loop
 
-
-runREPL :: IO()
 runREPL = runASTDebug
-
 
 parseFile file = do
   program  <- readFile file
   case parse program of
     Left e  -> pPrint e >> fail "parse error"
     Right exprs -> do
-      putStrLn $ "----- Running " ++ file ++ " -----"
-      runExpressions exprs
-      putStrLn $ "---------- END ----------"
+      pPrint exprs
+--      putStrLn $ "----- Running " ++ file ++ " -----"
+--      runExpressions exprs
+--      putStrLn $ "---------- END ----------"
 
