@@ -24,8 +24,9 @@ falseValue = reserved "false" >> (return $ Value $ Boolean False)
 trueValue = reserved "true" >> (return $ Value $ Boolean True)
 nullValue = reserved "null" >> (return $ Value Null)
 
-variableExpr = Variable <$> identifier
-printExpr = reserved "print" >> (return $ BuiltinRef Print)
+variableExpr = do
+  var <- identifier
+  checkNextCalls (Variable var)  -- check for chained calls
 
 atomicExpr =  try doubleValue
           <|> try integerValue
@@ -33,11 +34,6 @@ atomicExpr =  try doubleValue
           <|> try falseValue
           <|> try nullValue
           <|> try variableExpr
-          <|> try printExpr
-
--- Special case: not general-allowed but still atomic expressions
-
-selfExpr = reserved "self" >> (return $ BuiltinRef Self)
 
 -- ##########################
 -- ### SIMPLE EXPRESSIONS ###
@@ -51,7 +47,7 @@ unary s f = Ex.Prefix (reservedOp s >> return (UnOperator f))
 numberOperatorsTable = [ [ unary  "-"  Negate]
                        , [ binary "*"  Multiply       Ex.AssocLeft
                          , binary "/"  Divide         Ex.AssocLeft]
-                       , [ binary "+"  Plus           Ex.AssocLeft
+                       , [ binary "+"  Plus           Ex.AssocRight
                          , binary "-"  Minus          Ex.AssocLeft]
                        , [ binary "<"  Less           Ex.AssocNone
                          , binary "<=" LessOrEqual    Ex.AssocNone
@@ -66,61 +62,46 @@ boolOperatorsTable = [ [ unary "not"  Not]
 
 operatorsTable = numberOperatorsTable ++ boolOperatorsTable
 
-operatorExpr wFunc = Ex.buildExpressionParser operatorsTable (operandExpr' wFunc)
+operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
-operandExpr' withinFunc =  try (callExpr withinFunc)
-                       <|> try atomicExpr
-                       <|> try (parens $ operatorExpr withinFunc)
-                       <|> try (parens $ operandExpr' withinFunc)
-
-
--- Everything that possible could be called: everything but not assign or operatorExpr
--- Helper for `callExpr` parser
-callableExpr' =  try variableExpr
-             <|> try functionExpr
-             <|> try (parens callableExpr')
-
-callableWithinFuncExpr' =  try variableExpr
-                       <|> try selfExpr
-                       <|> try functionExpr
-                       <|> try (parens callableWithinFuncExpr')
+operandExpr' =  try (parens operandExpr')
+            <|> try lambdaExprCall
+            <|> try atomicExpr
+            <|> try (parens operatorExpr)
 
 -- Helper function, that detectes call (parens and comma-separated values)
-checkNextCalls :: Expr -> Bool -> Parser Expr
-checkNextCalls call withinFunc = do
-  nextArgs <- optionMaybe (parens $ commaSep (simpleExpr withinFunc))
+checkNextCalls call = do
+  nextArgs <- optionMaybe (parens $ commaSep simpleExpr)
   case nextArgs of
     Nothing   -> return $ call
-    Just args -> checkNextCalls (Call call args) withinFunc
+    Just args -> checkNextCalls (Call call args)
 
-callExpr withinFunc = do
-  callable <- callableWithinFuncExpr'
-  args <- parens $ commaSep (simpleExpr withinFunc)
-  return (Call callable args)
-  -- checkNextCalls (Call callable args) withinFunc
+lambdaExprCall = do
+  func <- (parens functionExpr)
+  checkNextCalls func
 
-assignExpr withinFunc = do
+assignExpr = do
   var <- identifier
   reservedOp "="
-  someExpr <- (simpleExpr withinFunc)
+  someExpr <- simpleExpr
   return $ Assign var someExpr
 
 -- Always starts new scope, so, not bool params required
 functionExpr = do
   reserved "function"
+  selfRef <- optionMaybe identifier
   args <- parens $ commaSep identifier
   body <- (blockExpr True False)
-  return $ Function args body
+  checkNextCalls $ Function selfRef args body
 
-simpleExpr withinFunc@False =  try (assignExpr withinFunc)
-                           <|> try functionExpr
-                           <|> try (callExpr withinFunc)
-                           <|> try (operatorExpr withinFunc)
-                           <|> parens (simpleExpr withinFunc)
-
-simpleExpr True = try selfExpr <|> try (simpleExpr False)
+simpleExpr =  try assignExpr
+          <|> try operatorExpr
+          <|> try functionExpr
+          <|> try lambdaExprCall
+          <|> try atomicExpr
+          <|> try (parens simpleExpr)
 
 -- ########################
 -- ### FLOW EXPRESSIONS ###
@@ -128,25 +109,36 @@ simpleExpr True = try selfExpr <|> try (simpleExpr False)
 
 ifExpr withinFunc withinWhile = do
   reserved "if"
-  conditional <- parens (simpleExpr withinFunc)
+  conditional <- parens simpleExpr
   trueBranch <- (blockExpr withinFunc withinWhile)
   falseBranch <- optionMaybe (reserved "else" >> (blockExpr withinFunc withinWhile))
   return $ If conditional trueBranch falseBranch
 
 whileExpr withinFunc = do
   reserved "while"
-  conditional <- parens (simpleExpr withinFunc)
+  conditional <- parens simpleExpr
   body <- (blockExpr withinFunc True)
   return $ While conditional body
 
-returnExpr = reserved "return" >> (Return <$> (optionMaybe (simpleExpr True)))
+printableExpr :: Parser (Either Expr String)
+printableExpr = do
+  maybeMsg <- optionMaybe stringLiteral
+  case maybeMsg of
+    Just msg -> return $ Right msg
+    Nothing -> Left <$> simpleExpr
+
+printExpr = do
+  reserved "print"
+  args <- parens $ commaSep printableExpr
+  return $ Print args
+
+returnExpr = reserved "return" >> (Return <$> (optionMaybe simpleExpr))
 
 continueExpr = reserved "continue" >> return Continue
 breakExpr = reserved "break" >> return Break
 whileOnlyExpr = try breakExpr <|> try continueExpr
 
-
-flowExpr' wFunc wWhile = try (ifExpr wFunc wWhile) <|> try (whileExpr wFunc)
+flowExpr' wFunc wWhile = try (ifExpr wFunc wWhile) <|> try (whileExpr wFunc) <|> try printExpr
 
 flowExpr False False = flowExpr' False False
 flowExpr True False = try returnExpr <|> try (flowExpr' True False)
@@ -161,11 +153,11 @@ flowExpr True True = try returnExpr <|> try whileOnlyExpr <|> try (flowExpr' Tru
 endsWithBlock :: Expr -> Bool
 endsWithBlock (While _ _)    = True
 endsWithBlock (If _ _ _)     = True
-endsWithBlock (Function _ _) = True
+endsWithBlock (Function _ _ _) = True
 endsWithBlock _              = False
 
 -- General parser to check all expressions available on top-level
-expr wFunc wWhile = try (simpleExpr wFunc) <|> try (flowExpr wFunc wWhile)
+expr wFunc wWhile = try simpleExpr <|> try (flowExpr wFunc wWhile)
 
 -- Parser modificator that ensures what expressions should end with semicolon on top-level
 ensureSemi :: Parser Expr -> Parser Expr

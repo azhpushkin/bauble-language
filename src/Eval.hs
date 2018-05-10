@@ -36,7 +36,7 @@ evalExpr env (Assign var expr) = do
   return (value, Map.insert var value newEnv)
 
 
-evalExpr env (Function args exprs) = do
+evalExpr env (Function _ args exprs) = do
   let closure = Closure (Map.insert "self" closure env) args exprs
   return (closure, env)
 
