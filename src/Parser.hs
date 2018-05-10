@@ -24,9 +24,7 @@ falseValue = reserved "false" >> (return $ Value $ Boolean False)
 trueValue = reserved "true" >> (return $ Value $ Boolean True)
 nullValue = reserved "null" >> (return $ Value Null)
 
-variableExpr = do
-  var <- identifier
-  checkNextCalls (Variable var)  -- check for chained calls
+variableExpr = identifier >>= (\var -> checkNextCalls (Variable var))
 
 atomicExpr =  try doubleValue
           <|> try integerValue
@@ -66,21 +64,19 @@ operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
-operandExpr' =  try (parens operandExpr')
-            <|> try lambdaExprCall
+operandExpr' =  try lambdaExprCall
             <|> try atomicExpr
             <|> try (parens operatorExpr)
 
 -- Helper function, that detectes call (parens and comma-separated values)
+checkNextCalls :: Expr -> Parser Expr
 checkNextCalls call = do
   nextArgs <- optionMaybe (parens $ commaSep simpleExpr)
   case nextArgs of
     Nothing   -> return $ call
     Just args -> checkNextCalls (Call call args)
 
-lambdaExprCall = do
-  func <- (parens functionExpr)
-  checkNextCalls func
+lambdaExprCall = (parens functionExpr) >>= checkNextCalls
 
 assignExpr = do
   var <- identifier
@@ -94,7 +90,7 @@ functionExpr = do
   selfRef <- optionMaybe identifier
   args <- parens $ commaSep identifier
   body <- (blockExpr True False)
-  checkNextCalls $ Function selfRef args body
+  return $ Function selfRef args body
 
 simpleExpr =  try assignExpr
           <|> try operatorExpr
