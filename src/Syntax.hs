@@ -14,7 +14,7 @@ numExpr = Value . Number
 
 data Value = Number Number
            | Boolean Bool
-           | Closure (Map.Map String Value) [String] [Expr]  -- Closure is not created directly
+           | Closure (Maybe String) (Map.Map String Value) [String] [Expr]  -- Closure is not created directly
            | Null
            deriving (Show, Ord, Eq)
 
