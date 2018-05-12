@@ -90,20 +90,20 @@ functionExpr = do
   selfRef <- optionMaybe identifier
   args <- parens $ commaSep identifier
   body <- (blockExpr True False)
+  notFollowedBy $ (parens $ commaSep identifier)
   return $ Function selfRef args body
 
-simpleExpr' =  try assignExpr
-          <|> try operatorExpr
-          <|> try lambdaExprCall
-          <|> try functionExpr
-          <|> try atomicExpr
-          <|> try (parens simpleExpr)
+callableExpr' =  try lambdaExprCall
+             <|> try functionExpr
+             <|> try variableExpr
+             <|> try (parens callableExpr')
 
-simpleExpr = do
-  call <- simpleExpr'
-  case call of
-    Function _ _ _ -> return call
-    _ -> checkNextCalls call
+nonCallableExpr' =  try assignExpr
+                <|> try operatorExpr
+                <|> try atomicExpr
+                <|> try (parens nonCallableExpr')
+
+simpleExpr = (try nonCallableExpr' <|> try callableExpr') >>= checkNextCalls
 
 
 -- ########################
