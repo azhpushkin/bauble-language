@@ -45,7 +45,7 @@ unary s f = Ex.Prefix (reservedOp s >> return (UnOperator f))
 numberOperatorsTable = [ [ unary  "-"  Negate]
                        , [ binary "*"  Multiply       Ex.AssocLeft
                          , binary "/"  Divide         Ex.AssocLeft]
-                       , [ binary "+"  Plus           Ex.AssocRight
+                       , [ binary "+"  Plus           Ex.AssocLeft
                          , binary "-"  Minus          Ex.AssocLeft]
                        , [ binary "<"  Less           Ex.AssocNone
                          , binary "<=" LessOrEqual    Ex.AssocNone
@@ -55,8 +55,8 @@ numberOperatorsTable = [ [ unary  "-"  Negate]
                          , binary "!=" NotEqual       Ex.AssocNone] ]
 
 boolOperatorsTable = [ [ unary "not"  Not]
-                     , [ binary "and" And Ex.AssocLeft
-                       , binary "or"  Or  Ex.AssocLeft] ]
+                     , [ binary "and" And Ex.AssocNone
+                       , binary "or"  Or  Ex.AssocNone] ]
 
 operatorsTable = numberOperatorsTable ++ boolOperatorsTable
 
@@ -167,9 +167,10 @@ ensureSemi :: Parser Expr -> Parser Expr
 ensureSemi exprParser = do
   newExpr <- exprParser
   case newExpr of
-    (endsWithBlock -> True)          -> return newExpr
-    Assign _ (endsWithBlock -> True) -> return newExpr
-    _                                -> (reservedOp ";" >> return newExpr)
+    (endsWithBlock -> True)                 -> return newExpr
+    Assign _ (endsWithBlock -> True)        -> return newExpr
+    Return (Just (endsWithBlock -> True))   -> return newExpr
+    _                                       -> (reservedOp ";" >> return newExpr)
 
 -- Parses many expressions of given parser with correct semicolons
 toplevelProducer :: Parser Expr -> Parser [Expr]

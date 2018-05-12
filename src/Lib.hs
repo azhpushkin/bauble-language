@@ -4,7 +4,7 @@ import Text.Pretty.Simple (pPrint)
 
 import Syntax
 import Parser
-import Eval
+import Evaluation
 
 
 process :: String -> IO ()
@@ -16,4 +16,4 @@ process line = do
 
 parse = parseToplevel
 
-runExpressions exprs = runInterpret emptyEnv exprs >> return ()
+startInterpreter exprs = runExpressions emptyEnv False Nothing exprs >> return ()

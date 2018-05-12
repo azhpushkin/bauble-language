@@ -44,8 +44,7 @@ parseFile file = do
   case parse program of
     Left e  -> pPrint e >> fail "parse error"
     Right exprs -> do
-      pPrint exprs
---      putStrLn $ "----- Running " ++ file ++ " -----"
---      runExpressions exprs
---      putStrLn $ "---------- END ----------"
+      putStrLn $ "----- Running " ++ file ++ " -----"
+      startInterpreter exprs
+      putStrLn $ "---------- END ----------"
 
