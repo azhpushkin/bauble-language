@@ -1,6 +1,6 @@
 #### Simple programming languages
 
-![Yeah, this is bubble](/icon.png?s=200)
+![Yeah, this is bauble](/icon.png?s=200)
 
 Created for educational purposes.
 Dynamically typed imperative language with first-class functions.
@@ -8,34 +8,23 @@ Dynamically typed imperative language with first-class functions.
 Supported values:
 * number (integer, double, rational)
 * bool (`true` and `false`)
-* `null`
-* closures (all functions are first-class and support clojuring)
+* `null` (NOTE: no way to check if value is null now)
 
 Basic features:
-* Recursion (via `self`)
-* If expression
-* While loop
-* Lambdas and chained calls
+* If expressions
+* While expressions
+* Simple bool and numbers operators
+* Double and rational numbers
+* First-class functions (lambda support)
 
 Some more specific examples could be found in the [examples](examples) directory.
 
 
 TODO:
-* rational numbers
-* fix `return` inside `if` and `while` blocks
-* refactor error-handling
 * Write down Backus-Naur form
-* optimize closures
-* change self, print etc as a predetermined functions (reserved names)
-
-
-
-
-Thoughts:
-* print and self can have `reserved functions` type in the Value datatype `Value`
-
-
-#### Some notes
-* All expressions are returning values (even while loops and ifs), they are
-considered as flow-control expressions and does not allowed in 
-assignment, return statements etc
+  (who cares? but could be great for course-work documentation)
+* optimize closures (PRIORITY)
+* change `print` expression to be one of builtin functions (PRIORITY)
+* `isnull` function
+* `nonlocal` keyword (PRIORITY)
+* Write down details of Syntax analisys and evaluation rules

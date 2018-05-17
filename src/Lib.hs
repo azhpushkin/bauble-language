@@ -7,13 +7,16 @@ import Parser
 import Evaluation
 
 
-process :: String -> IO ()
-process line = do
+parse :: String -> IO ([Expr])
+parse line = do
   let res = parseToplevel line
   case res of
-    Left err -> pPrint err
-    Right ex -> mapM_ pPrint ex
+    Left err -> pPrint err >> return []
+    Right ex -> return ex
 
-parse = parseToplevel
 
-startInterpreter exprs = runExpressions emptyEnv False Nothing exprs >> return ()
+startInterpreter :: (Maybe Env) -> [Expr] -> IO (Env)
+startInterpreter Nothing es = startInterpreter (Just emptyEnv) es
+startInterpreter (Just env) exprs = do
+  (newEnv, _) <- runExpressions env False Nothing exprs
+  return newEnv
