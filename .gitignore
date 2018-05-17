@@ -4,3 +4,5 @@ bauble.cabal
 
 .idea/
 out/
+
+bauble-exe

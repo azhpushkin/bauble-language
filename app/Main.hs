@@ -1,6 +1,7 @@
 module Main where
 
 import Lib
+import Evaluation (Env)
 
 import Control.Monad.Trans
 import System.Environment
@@ -22,7 +23,6 @@ help = putStr $ unlines
     [ "Usage: bauble [cmd | pathToFile]"
     , ""
     , "Commands:"
-    , "  help      show this help text"
     , "  repl      start REPL"
     , "  ast       start REPL for AST debugging"
     ]
@@ -35,16 +35,31 @@ runASTDebug = runInputT defaultSettings loop
     minput <- getInputLine "ready> "
     case minput of
       Nothing    -> outputStrLn "Goodbye."
-      Just input -> (liftIO $ process input) >> loop
+      Just input -> (liftIO $ (parse input) >>= (\ast -> (pPrint ast >> return ()))) >> loop
+      
+        
 
-runREPL = runASTDebug
+processLine :: String -> Maybe Env -> IO(Maybe Env)
+processLine line env = do
+  exprs <- parse line
+  newEnv <- startInterpreter env exprs
+  return (Just newEnv)
+
+
+runREPL :: IO ()
+runREPL = runInputT defaultSettings (loop Nothing)
+  where
+  loop env = do
+    minput <- getInputLine "ready> "
+    case minput of
+      Nothing    -> outputStrLn "Goodbye."
+      Just input -> (liftIO $ processLine input env) >>= loop
+        
 
 parseFile file = do
   program  <- readFile file
-  case parse program of
-    Left e  -> pPrint e >> fail "parse error"
-    Right exprs -> do
-      putStrLn $ "----- Running " ++ file ++ " -----"
-      startInterpreter exprs
-      putStrLn $ "---------- END ----------"
+  exprs <- parse program
+  putStrLn $ "----- Running " ++ file ++ " -----"
+  _ <- startInterpreter Nothing exprs
+  putStrLn $ "---------- END ----------"
 
