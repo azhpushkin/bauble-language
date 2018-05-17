@@ -29,11 +29,16 @@ runExpressions env currCall currWhile exprs = do
             (Boolean False) -> return (env, Nothing)
         Nothing -> return (env, if currCall then (Just Null) else Nothing)
 
+    -- Return expressions are not allowed on the top-level
+    -- but Parser makes sure they appear only in function body
+    -- Thus, we can just return value without validating `currCall`
     (Return (Just expr)):_ -> do
       (value, _) <- evalExpr env expr
       return (env, Just value)
     (Return Nothing):_ -> return (env, Nothing)
 
+    -- Same here: Parser validates this ones happen only in while-loops
+    -- So we assume there are (Just loop) in currWhile
     (Continue:_) -> runExpressions env currCall currWhile []
     (Break:_)    -> return (env, Nothing)
 
