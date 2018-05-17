@@ -28,3 +28,4 @@ TODO:
 * `isnull` function
 * `nonlocal` keyword (PRIORITY)
 * Write down details of Syntax analisys and evaluation rules
+* Error-handling of evaluation
