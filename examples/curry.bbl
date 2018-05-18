@@ -1,0 +1,15 @@
+curry2Args = function(func) {
+  return function(x) {
+      return function (y) {
+          return func(x, y);
+      }
+  }
+}
+
+
+sumNumbers = function(x, y) {
+  return x + y;
+}
+
+print("initial: ", sumNumbers(12, 30));
+print("curried: ", curry2Args(sumNumbers)(12)(30));

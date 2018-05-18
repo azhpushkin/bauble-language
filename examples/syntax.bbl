@@ -1,0 +1,38 @@
+// This is a one-line comment
+
+
+100;  // Numeric value
+const = 100;  // Assign
+function (x, y, z) { 42; }  // Function value
+
+// Call of lambda-function
+one = (function (x, y) { return x / y; }) (const, 100);
+
+
+dontChange = function (x) {
+    /*
+        Multiline comment
+        Maybe somewhen it will add docstring to function
+        But this is very another story...
+    */
+    y = x - 100;
+    z = y + 100;
+    if (y < z and y == y)
+    { z = z * one; }
+    else { z = 0; }
+
+    return z;
+
+}
+
+one = 999;  //  This should not affect dontChange (closure behaviour)
+
+main = function () {
+    dontChange(100);
+}
+
+
+if (true) // empty does not allowed
+{ } // empty allowed
+// else can be missed
+
