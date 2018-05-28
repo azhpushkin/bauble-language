@@ -15,6 +15,7 @@ main = do
   case args of
     -- ["repl"]      -> runREPL
     ["ast"]       -> runASTDebug
+    ["ast", fname]       -> parseFileAST fname
     -- [fname]       -> parseFile fname >> return ()
     _             -> help
 
@@ -36,7 +37,14 @@ runASTDebug = runInputT defaultSettings loop
     case minput of
       Nothing    -> outputStrLn "Goodbye."
       Just input -> (liftIO $ (parse input) >>= (\ast -> (pPrint ast >> return ()))) >> loop
-      
+
+parseFileAST file = do
+  program  <- readFile file
+  exprs <- parse program
+  putStrLn $ "----- AST of " ++ file ++ " -----"
+  pPrint exprs
+  putStrLn $ "---------- END ----------"
+
         
 
 -- processLine :: String -> Maybe Env -> IO(Maybe Env)

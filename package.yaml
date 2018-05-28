@@ -36,6 +36,7 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
+    - -fforce-recomp
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
