@@ -15,9 +15,10 @@ lexer = Tok.makeTokenParser languageDef
            "and", "or", "not", "="]
     names = ["true", "false", "null",  -- predefined values
              "if", "else",  -- if-expression
-             "function", "return",  -- function declaration
+             "function", "return",  "nonlocal", -- function declaration
              "while", "break", "continue",  -- while-expression
-             "print"]
+             "print", "isnull"  -- builtin functions
+            ]
     languageDef = emptyDef {
                 Tok.commentLine = "//"
               , Tok.commentStart = "/*"
@@ -36,6 +37,7 @@ identifier = Tok.identifier lexer
 
 parens = Tok.parens lexer
 braces = Tok.braces lexer
+brackets = Tok.brackets lexer
 
 semiSep = Tok.semiSep lexer
 commaSep = Tok.commaSep lexer
