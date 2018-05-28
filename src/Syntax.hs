@@ -44,7 +44,7 @@ data Statement = Expression Expression
                | Assign String Expression
                | While Expression [Statement]
                | If Expression [Statement] (Maybe [Statement])
-               | Import String (Maybe String)
+               | Import String
 
                -- Function body only
                | Return (Maybe Expression)
