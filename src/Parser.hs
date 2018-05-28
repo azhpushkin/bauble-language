@@ -38,7 +38,7 @@ printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
 builinFunctionExpr = trySeveral [printExpr, isNullExpr]
 
-variableExpr = withNextCalls (Variable <$> identifier)
+variableExpr = Variable <$> identifier
 
 atomicExpr =  trySeveral [ doubleExpr
                          , integerExpr
@@ -81,6 +81,7 @@ operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
 operandExpr' =  trySeveral [ lambdaExprCall
+                           , variableExprCall
                            , atomicExpr
                            , (parens operatorExpr) ]
 
@@ -92,6 +93,7 @@ withNextCalls parser = do
   return $ foldl (\callable -> \args -> (Call callable args)) expr nextArgs
 
 lambdaExprCall = withNextCalls (parens functionExpr)
+variableExprCall = withNextCalls variableExpr
 
 assignExpr = do
   var <- identifier
