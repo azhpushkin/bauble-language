@@ -15,6 +15,7 @@ lexer = Tok.makeTokenParser languageDef
            "and", "or", "not", "="]
     names = ["true", "false", "null",  -- predefined values
              "if", "else",  -- if-expression
+             "import", "as",  -- imports
              "function", "return",  "nonlocal", -- function declaration
              "while", "break", "continue",  -- while-expression
              "print", "isnull"  -- builtin functions
@@ -42,6 +43,7 @@ brackets = Tok.brackets lexer
 semiSep = Tok.semiSep lexer
 commaSep = Tok.commaSep lexer
 semi = Tok.semi lexer
+dot = Tok.dot lexer
 whiteSpace = Tok.whiteSpace lexer
 
 reserved = Tok.reserved lexer

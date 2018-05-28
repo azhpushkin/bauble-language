@@ -9,7 +9,7 @@ import Parser
 import Syntax
 
 shouldParseTo (parseToplevel -> Left err) expected = error $ "Error occured! " ++ show err
-shouldParseTo (parseToplevel -> Right exprs) expected = exprs `shouldBe` expected
+shouldParseTo (parseToplevel -> Right exprs) expected = exprs `shouldBe` [expected]
 
 shouldFail (parseToplevel -> Left err) = 1 `shouldBe` 1
 shouldFail (parseToplevel -> Right exprs) = error $ "Error not occured, AST is " ++ show exprs
@@ -20,7 +20,7 @@ spec = do
   describe "process" $ do
     it "1. Empty `return` is allowed" $ do
       let result = Function Nothing [] [(Return Nothing)]
-      "function() {return;}" `shouldParseTo` [Expression result]
+      "function() {return;}" `shouldParseTo` (Expression result)
 
     it "2. `return` in `if` expression, if without braces" $ do
       let programText = "function () {\
@@ -30,7 +30,7 @@ spec = do
       let result = Function Nothing [] [(If (Value (Boolean True))
                                         [(Return $ Just (Value (Boolean True)))]
                                         (Just [(Return $ Just (Value (Boolean False)))]))]
-      programText `shouldParseTo` [Expression result]
+      programText `shouldParseTo` (Expression result)
 
     it "3. `return` in `while` expression, while without braces" $ do
       let programText = "function () {\
@@ -39,7 +39,7 @@ spec = do
                         \}"
       let result = Function Nothing [] [(While (Value (Boolean False))
                                          [(Return $ Just (Value (Integer 1)))])]
-      programText `shouldParseTo` [Expression result]
+      programText `shouldParseTo` (Expression result)
 
 
     it "4. `while`, `if` and `function` expressions with blocks without braces" $ do
@@ -61,7 +61,7 @@ spec = do
                         []
                         [(While (Value $ Boolean False) whileBody)])
 
-      programText `shouldParseTo` [result]
+      programText `shouldParseTo` result
 
     it "5. Chained calls" $ do
       let programText = "(x()(1)) (function() {})(true);"
@@ -69,7 +69,7 @@ spec = do
       let secondCall = Call firstCall [(Value $ Integer 1)]
       let thirdCall = Call secondCall [(Function Nothing [] [])]
       let lastCall = Call thirdCall [(Value $ Boolean True)]
-      programText `shouldParseTo` [Expression lastCall]
+      programText `shouldParseTo` (Expression lastCall)
 
 
     it "6. `break` and `continue` allowed in if block" $ do
@@ -81,7 +81,7 @@ spec = do
                          [(If (Value $ Integer 1)
                              [Break]
                              (Just [Continue]))]
-      programText `shouldParseTo` [result]
+      programText `shouldParseTo` (result)
 
     it "7. `break` not allowed in function inside while" $ do
       let programText = "while (true) function() break;"
@@ -96,7 +96,7 @@ spec = do
       shouldFail "return;"
 
     it "10. `nonlocal` and 'return` allowed inside of function body" $ do
-      let withBody body = [Expression (Function Nothing [] body)]
+      let withBody body = (Expression (Function Nothing [] body))
 
       "function () {nonlocal somevar;}" `shouldParseTo` (withBody [Nonlocal "somevar"])
       "function () {return somevar;}" `shouldParseTo` (withBody
@@ -118,7 +118,7 @@ spec = do
                                            [If (Value $ Boolean True)
                                                [(Return Nothing), Break, Continue]
                                                Nothing])]
-      programText `shouldParseTo` [Expression result]
+      programText `shouldParseTo` (Expression result)
 
     it "12. `if`, `function` and `while` does not require semicolon" $ do
       shouldFail "function () {};"
@@ -126,7 +126,24 @@ spec = do
       shouldFail "if (1) {} else {};"
       shouldFail "while (1) {};"
 
-      "function () {}" `shouldParseTo` [Expression (Function Nothing [] [])]
-      "if (1) {}" `shouldParseTo` [If (Value $ Integer 1) [] Nothing]
-      "if (1) {} else {}" `shouldParseTo` [If (Value $ Integer 1) [] (Just [])]
-      "while (1) {}" `shouldParseTo` [While (Value $ Integer 1) []]
+      "function () {}" `shouldParseTo` (Expression (Function Nothing [] []))
+      "if (1) {}" `shouldParseTo` (If (Value $ Integer 1) [] Nothing)
+      "if (1) {} else {}" `shouldParseTo` (If (Value $ Integer 1) [] (Just []))
+      "while (1) {}" `shouldParseTo` (While (Value $ Integer 1) [])
+
+    it "13. Bad `import` statement in differens variations" $ do
+      shouldFail "import;"
+      shouldFail "import .;"
+      shouldFail "import .something;"
+      shouldFail "import something.more.;"
+
+      shouldFail "import something as .;"
+      shouldFail "import something.another as .name;"
+      shouldFail "import something.another name;"
+      shouldFail "import something.another as name.name;"
+
+    it "14. Correct `import` statement in differens variations" $ do
+      "import module;" `shouldParseTo` (Import ["module"] Nothing)
+      "import module.more;" `shouldParseTo` (Import ["module", "more"] Nothing)
+      "import some.x as somename;" `shouldParseTo` (Import ["some", "x"] (Just "somename"))
+      "import some as somename;" `shouldParseTo` (Import ["some"] (Just "somename"))

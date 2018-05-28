@@ -36,7 +36,7 @@ stringExpr = (Value . String) <$> stringLiteral
 
 printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
-builinFunctionExpr = trySeveral [printExpr, isNullExpr]
+builtinFunctionExpr = trySeveral [printExpr, isNullExpr]
 
 variableExpr = Variable <$> identifier
 
@@ -46,7 +46,7 @@ atomicExpr =  trySeveral [ doubleExpr
                          , falseExpr
                          , nullExpr
                          , stringExpr
-                         , builinFunctionExpr
+                         , builtinFunctionExpr
                          , variableExpr ]
 
 -- ##########################
@@ -113,7 +113,7 @@ functionExpr = do
 callableExpr' =  trySeveral [ lambdaExprCall
                             , functionExpr
                             , variableExpr
-                            , builinFunctionExpr
+                            , builtinFunctionExpr
                             , (parens callableExpr') ]
 
 nonCallableExpr' =  trySeveral [ operatorExpr
@@ -128,7 +128,11 @@ simpleExpr = withNextCalls (trySeveral [nonCallableExpr', callableExpr'])
 -- ### FLOW EXPRESSIONS ###
 -- ########################
 
-importStmt = reserved "import" >> (Import <$> identifier)
+importStmt = do
+  reserved "import"
+  path <- identifier `sepBy1` (dot >> notFollowedBy whiteSpace)
+  qualifier <- optionMaybe (reserved "as" >> identifier)
+  return (Import path qualifier)
 
 ifExpr withinFunc withinWhile = do
   reserved "if"
