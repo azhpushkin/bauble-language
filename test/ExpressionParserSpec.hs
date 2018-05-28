@@ -29,6 +29,7 @@ spec = do
 
     it "`isnull` parses as builtin function" $ do
       "isnull" `shouldParseTo` (Value (BuiltinFunction IsNull))
+      "isnull(x)" `shouldParseTo` (Call (Value (BuiltinFunction IsNull)) [Variable "x"])
 
     it "`print` parses as builtin function" $ do
       "print(\"hello\", 1)" `shouldParseTo` (Call (Value (BuiltinFunction Print))
@@ -84,5 +85,15 @@ spec = do
                                                     , (Call (Variable "y")
                                                             [(array [ (Value $ Double 4.2)
                                                                     , (Value Null)])])]
+
+    it "Array as operand" $ do
+      "[1 + 2]" `shouldParseTo` array [BinaryOp Plus (Value $ Integer 1)
+                                                     (Value $ Integer 2)]
+
+      "[] + [2]" `shouldParseTo` (BinaryOp Plus (array []) (array [(Value $ Integer 2)]))
+      "x() + []" `shouldParseTo` (BinaryOp Plus (Call (Variable "x") [])
+                                                (array []))
+      "[print] + x()" `shouldParseTo` (BinaryOp Plus (array [Value $ BuiltinFunction Print])
+                                                     (Call (Variable "x") []))
 
 
