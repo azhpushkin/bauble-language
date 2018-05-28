@@ -27,6 +27,7 @@ TODO:
 * Write down details of Syntax analisys and evaluation rules
 * Error-handling of evaluation
 * executable options
+* try to optimize detection of chained calls and subscriptions
 
 
 

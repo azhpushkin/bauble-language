@@ -4,6 +4,7 @@ module Parser where
 
 import Text.Parsec
 import Text.Parsec.String (Parser)
+import Data.List (foldl')
 
 import qualified Text.Parsec.Expr as Ex
 import qualified Text.Parsec.Token as Tk
@@ -94,16 +95,26 @@ withNextCalls :: Parser Expression -> Parser Expression
 withNextCalls parser = do
   expr <- parser
   nextArgs <- many (parens $ commaSep expression)
-  return $ foldl (\callable -> \args -> (Call callable args)) expr nextArgs
+  return $ foldl' (\callable -> \args -> (Call callable args)) expr nextArgs
 
 -- Helper function, that detects subscript (access to array items)
 withNextSubscripts :: Parser Expression -> Parser Expression
 withNextSubscripts parser = do
   expr <- parser
   nextSubscripts <- many (brackets integer)
-  return $ foldl (\value -> \index -> (Subscript value index)) expr nextSubscripts
+  return $ foldl' (\value -> \index -> (Subscript value index)) expr nextSubscripts
 
-withNext = withNextSubscripts . withNextCalls
+withNext parser = do
+  originalExpr <- (lookAhead parser)
+  withCalls <- (lookAhead $ withNextCalls parser)
+  withSubscripts <- (lookAhead $ withNextSubscripts parser)
+
+  case withCalls /= originalExpr of
+    True  -> (withNext $ withNextCalls parser)
+    False ->
+      case withSubscripts /= originalExpr of
+        True  -> (withNext $ withNextSubscripts parser)
+        False -> parser
 
 lambdaExprCall = withNextCalls (parens functionExpr)
 variableExprCall = withNextCalls variableExpr

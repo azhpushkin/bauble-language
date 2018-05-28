@@ -120,5 +120,8 @@ spec = do
       let sub expr = (Subscript expr 0)
       let call expr = (Call expr [])
       let chain = sub . call . sub . call . sub . call . sub
+
       "x[0]()[0]()[0]()[0]" `shouldParseTo` (chain (Variable "x"))
+      "(x[0]()[0])()[0]()[0]" `shouldParseTo` (chain (Variable "x"))
+      "(x[0]()[0]())[0]()[0]" `shouldParseTo` (chain (Variable "x"))
 
