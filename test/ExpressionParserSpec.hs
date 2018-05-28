@@ -49,27 +49,40 @@ spec = do
                                                          (Call (Function Nothing [] []) []))
 
     it "Call could be left operand of operator" $ do
-       "some() + 1" `shouldParseTo` (BinaryOp Plus
-                                              (Call (Variable "some") [])
-                                              (Value $ Integer 1))
+      "some() + 1" `shouldParseTo` (BinaryOp Plus
+                                             (Call (Variable "some") [])
+                                             (Value $ Integer 1))
 
     it "Lambda-call could be left operand of operator" $ do
-       "(function () {})() / 1" `shouldParseTo` (BinaryOp Divide
-                                                          (Call (Function Nothing [] []) [])
-                                                          (Value $ Integer 1))
+      "(function () {})() / 1" `shouldParseTo` (BinaryOp Divide
+                                                         (Call (Function Nothing [] []) [])
+                                                         (Value $ Integer 1))
 
     it "Call could be left operand of unary operators" $ do
-       "not foo()" `shouldParseTo` (UnaryOp Not (Call (Variable "foo") []))
-       "- foo()" `shouldParseTo` (UnaryOp Negate (Call (Variable "foo") []))
+      "not foo()" `shouldParseTo` (UnaryOp Not (Call (Variable "foo") []))
+      "- foo()" `shouldParseTo` (UnaryOp Negate (Call (Variable "foo") []))
 
     it "Lambda-call could be left operand of unary operators" $ do
-       "not (function () {})()" `shouldParseTo` (UnaryOp Not (Call (Function Nothing [] []) []))
-       "- (function () {})()" `shouldParseTo` (UnaryOp Negate (Call (Function Nothing [] []) []))
+      "not (function () {})()" `shouldParseTo` (UnaryOp Not (Call (Function Nothing [] []) []))
+      "- (function () {})()" `shouldParseTo` (UnaryOp Negate (Call (Function Nothing [] []) []))
 
     it "Lambda-call allowed only in parentheses" $ do
-       "(function () {}) ()  ()" `shouldParseTo` (Call (Call (Function Nothing [] []) []) [])
-       shouldFail "function () {} ();"
+      "(function () {}) ()  ()" `shouldParseTo` (Call (Call (Function Nothing [] []) []) [])
+      shouldFail "function () {} ();"
 
-    it "Lambda-call as argument of lambda-call" $ do
-       let res = Call (Function Nothing [] []) [(Call (Function Nothing [] []) [])]
-       "(function () {}) ((function () {}) ())" `shouldParseTo` res
+    let array = (Value . Array) :: [Expression] -> Expression
+    it "Simple array expressions" $ do
+      "[]" `shouldParseTo` (array [])
+      "[1]" `shouldParseTo` (array [(Value $ Integer 1)])
+      "[x, print]" `shouldParseTo` (array [ (Variable "x")
+                                          , (Value $ BuiltinFunction Print)])
+
+      shouldFail "[x, print, ]"  -- TRAILING COMMAS GOODBYE
+
+    it "Array with call and as call argument" $ do
+      "[x(), y([4.2, null])]" `shouldParseTo` array [ (Call (Variable "x") [])
+                                                    , (Call (Variable "y")
+                                                            [(array [ (Value $ Double 4.2)
+                                                                    , (Value Null)])])]
+
+

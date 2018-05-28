@@ -53,6 +53,8 @@ atomicExpr =  trySeveral [ doubleExpr
 -- ### SIMPLE EXPRESSIONS ###
 -- ##########################
 
+arrayExpr = (Value . Array) <$> (brackets $ commaSep simpleExpr)
+
 -- OPERATORS TABLE
 
 binary s f assoc = Ex.Infix (reservedOp s >> return (BinaryOp f)) assoc
@@ -83,6 +85,7 @@ operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 operandExpr' =  trySeveral [ lambdaExprCall
                            , variableExprCall
                            , atomicExpr
+                           , arrayExpr
                            , (parens operatorExpr) ]
 
 -- Helper function, that detectes call (parens and comma-separated values)
@@ -118,6 +121,7 @@ callableExpr' =  trySeveral [ lambdaExprCall
 
 nonCallableExpr' =  trySeveral [ operatorExpr
                                , atomicExpr
+                               , arrayExpr
                                , (parens nonCallableExpr') ]
 
 simpleExpr :: Parser Expression

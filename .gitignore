@@ -13,4 +13,5 @@ cabal.config
 out/
 
 # Executable
+bauble-exe
 
