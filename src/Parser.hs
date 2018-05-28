@@ -53,7 +53,7 @@ atomicExpr =  trySeveral [ doubleExpr
 -- ### SIMPLE EXPRESSIONS ###
 -- ##########################
 
-arrayExpr = (Value . Array) <$> (brackets $ commaSep simpleExpr)
+arrayExpr = (Value . Array) <$> (brackets $ commaSep expression)
 
 -- OPERATORS TABLE
 
@@ -92,7 +92,7 @@ operandExpr' =  trySeveral [ lambdaExprCall
 withNextCalls :: Parser Expression -> Parser Expression
 withNextCalls parser = do
   expr <- parser
-  nextArgs <- many (parens $ commaSep simpleExpr)
+  nextArgs <- many (parens $ commaSep expression)
   return $ foldl (\callable -> \args -> (Call callable args)) expr nextArgs
 
 lambdaExprCall = withNextCalls (parens functionExpr)
@@ -101,7 +101,7 @@ variableExprCall = withNextCalls variableExpr
 assignExpr = do
   var <- identifier
   reservedOp "="
-  someExpr <- simpleExpr
+  someExpr <- expression
   return $ Assign var someExpr
 
 -- Always starts new scope, so, not bool params required
@@ -124,8 +124,8 @@ nonCallableExpr' =  trySeveral [ operatorExpr
                                , arrayExpr
                                , (parens nonCallableExpr') ]
 
-simpleExpr :: Parser Expression
-simpleExpr = withNextCalls (trySeveral [nonCallableExpr', callableExpr'])
+expression :: Parser Expression
+expression = withNextCalls (trySeveral [nonCallableExpr', callableExpr'])
 
 
 -- ########################
@@ -140,19 +140,19 @@ importStmt = do
 
 ifExpr withinFunc withinWhile = do
   reserved "if"
-  conditional <- parens simpleExpr
+  conditional <- parens expression
   trueBranch <- (blockExpr withinFunc withinWhile)
   falseBranch <- optionMaybe (reserved "else" >> (blockExpr withinFunc withinWhile))
   return $ If conditional trueBranch falseBranch
 
 whileExpr withinFunc = do
   reserved "while"
-  conditional <- parens simpleExpr
+  conditional <- parens expression
   body <- (blockExpr withinFunc True)
   return $ While conditional body
 
 
-returnExpr = reserved "return" >> (Return <$> (optionMaybe simpleExpr))
+returnExpr = reserved "return" >> (Return <$> (optionMaybe expression))
 nonlocalExpr = reserved "nonlocal" >> (Nonlocal <$> identifier)
 funcOnlyExpr = trySeveral [returnExpr, nonlocalExpr]
 
@@ -183,8 +183,8 @@ endsWithBlock (Expression (Function _ _ _)) = True
 endsWithBlock _                = False
 
 -- General parser to check all expressions available on top-level
-simpleStmt = Expression <$> simpleExpr
-stmt wFunc wWhile = trySeveral [(flowExpr wFunc wWhile), simpleStmt]
+simpleStmt = Expression <$> expression
+statement wFunc wWhile = trySeveral [(flowExpr wFunc wWhile), simpleStmt]
 
 -- Parser modificator that ensures what expressions should end with semicolon on top-level
 ensureSemi :: Parser Statement -> Parser Statement
@@ -199,8 +199,8 @@ toplevelProducer :: Parser Statement -> Parser [Statement]
 toplevelProducer = many . ensureSemi
 
 -- Blocks ( { } ) parsers for given allowed expressions
-blockExpr wFunc wWhile =  trySeveral [ (braces $ toplevelProducer (stmt wFunc wWhile))
-                                     , (blockExprAsSingle $ ensureSemi (stmt wFunc wWhile)) ]
+blockExpr wFunc wWhile =  trySeveral [ (braces $ toplevelProducer (statement wFunc wWhile))
+                                     , (blockExprAsSingle $ ensureSemi (statement wFunc wWhile)) ]
 
 -- Helper function to allow single expression as block
 blockExprAsSingle :: Parser Statement -> Parser [Statement]
@@ -216,4 +216,4 @@ contents p = do
 
 -- Parse given string or return an error
 parseToplevel :: String -> Either ParseError [Statement]
-parseToplevel s = parse (contents $ toplevelProducer (stmt False False)) "<stdin>" s
+parseToplevel s = parse (contents $ toplevelProducer (statement False False)) "<stdin>" s

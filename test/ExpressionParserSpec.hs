@@ -11,7 +11,7 @@ import Parser
 import Syntax
 
 expressionParser :: String -> Either ParseError Expression
-expressionParser input = parse (contents simpleExpr) "stdin" input
+expressionParser input = parse (contents expression) "stdin" input
 
 shouldParseTo (expressionParser -> Left err) expected = error $ "Error occured! " ++ show err
 shouldParseTo (expressionParser -> Right expr) expected = expr `shouldBe` expected
