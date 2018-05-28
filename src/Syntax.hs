@@ -34,9 +34,11 @@ data Expression = Value Value
                            [String]  -- List of argument names
                            [Statement]  -- Function body
 
-                -- Operators
+                -- Operators and array subscription
                 | BinaryOp BinaryOp Expression Expression
                 | UnaryOp UnaryOp Expression
+                | Subscript Expression Integer
+
                 deriving (Show, Ord, Eq)
 
 

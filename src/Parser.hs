@@ -78,22 +78,32 @@ boolOperatorsTable = [ [ unary "not"  Not]
 
 operatorsTable = numberOperatorsTable ++ boolOperatorsTable
 
-operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
+operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr
 
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
-operandExpr' =  trySeveral [ lambdaExprCall
+operandExpr' =  (trySeveral [ lambdaExprCall
                            , variableExprCall
                            , atomicExpr
                            , arrayExpr
-                           , (parens operatorExpr) ]
+                           , (parens operatorExpr) ])
+operandExpr = withNext operandExpr'
 
--- Helper function, that detectes call (parens and comma-separated values)
+-- Helper function, that detects call (parentheses and comma-separated values)
 withNextCalls :: Parser Expression -> Parser Expression
 withNextCalls parser = do
   expr <- parser
   nextArgs <- many (parens $ commaSep expression)
   return $ foldl (\callable -> \args -> (Call callable args)) expr nextArgs
+
+-- Helper function, that detects subscript (access to array items)
+withNextSubscripts :: Parser Expression -> Parser Expression
+withNextSubscripts parser = do
+  expr <- parser
+  nextSubscripts <- many (brackets integer)
+  return $ foldl (\value -> \index -> (Subscript value index)) expr nextSubscripts
+
+withNext = withNextSubscripts . withNextCalls
 
 lambdaExprCall = withNextCalls (parens functionExpr)
 variableExprCall = withNextCalls variableExpr
@@ -125,7 +135,7 @@ nonCallableExpr' =  trySeveral [ operatorExpr
                                , (parens nonCallableExpr') ]
 
 expression :: Parser Expression
-expression = withNextCalls (trySeveral [nonCallableExpr', callableExpr'])
+expression = withNext (trySeveral [nonCallableExpr', callableExpr'])
 
 
 -- ########################

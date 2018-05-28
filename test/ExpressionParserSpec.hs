@@ -96,4 +96,29 @@ spec = do
       "[print] + x()" `shouldParseTo` (BinaryOp Plus (array [Value $ BuiltinFunction Print])
                                                      (Call (Variable "x") []))
 
+    it "Array subscription" $ do
+      "[1, 2][0]" `shouldParseTo` (Subscript (array [ (Value $ Integer 1)
+                                                    , (Value $ Integer 2)]) 0)
+      "x[0]" `shouldParseTo` (Subscript (Variable "x") 0)
+
+      shouldFail "x[1, 2]"
+      shouldFail "x[1.0]"
+      shouldFail "x[1]"
+      shouldFail "x[\"1\"]"
+
+    it "Chained array subscriptions and calls" $ do
+      "x[0]()" `shouldParseTo` (Call (Subscript (Variable "x") 0) [])
+
+      "x()[1]()" `shouldParseTo` (Call (Subscript (Call (Variable "x") []) 1) [])
+      "(x()[1])()" `shouldParseTo` (Call (Subscript (Call (Variable "x") []) 1) [])
+      "(x())[1]()" `shouldParseTo` (Call (Subscript (Call (Variable "x") []) 1) [])
+
+      "(x()[1]) [5]" `shouldParseTo` (Subscript (Subscript (Call (Variable "x") []) 1) 5)
+      "(x())[1][5]" `shouldParseTo` (Subscript (Subscript (Call (Variable "x") []) 1) 5)
+
+    it "REALLT A LOT of chained subscriprions and calls" $ do
+      let sub expr = (Subscript expr 0)
+      let call expr = (Call expr [])
+      let chain = sub . call . sub . call . sub . call . sub
+      "x[0]()[0]()[0]()[0]" `shouldParseTo` (chain (Variable "x"))
 
