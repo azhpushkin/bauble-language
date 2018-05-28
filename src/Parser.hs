@@ -11,6 +11,12 @@ import qualified Text.Parsec.Token as Tk
 import Lexer
 import Syntax
 
+trySeveral :: [Parser a] -> Parser a
+trySeveral []           = error "trySeveral called with zero arguments!"
+trySeveral (first:rest) = foldl (\fst -> \snd -> fst <|> try snd)
+                                (try first) rest
+
+
 -- ##########################
 -- ### ATOMIC EXPRESSIONS ###
 -- ##########################
@@ -30,18 +36,18 @@ stringExpr = (Value . String) <$> stringLiteral
 
 printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
-builinFunctionExpr = try printExpr <|> try isNullExpr
+builinFunctionExpr = trySeveral [printExpr, isNullExpr]
 
 variableExpr = identifier >>= (\var -> checkNextCalls (Variable var))
 
-atomicExpr =  try doubleExpr
-          <|> try integerExpr
-          <|> try trueExpr
-          <|> try falseExpr
-          <|> try nullExpr
-          <|> try stringExpr
-          <|> try builinFunctionExpr
-          <|> try variableExpr
+atomicExpr =  trySeveral [ doubleExpr
+                         , integerExpr
+                         , trueExpr
+                         , falseExpr
+                         , nullExpr
+                         , stringExpr
+                         , builinFunctionExpr
+                         , variableExpr ]
 
 -- ##########################
 -- ### SIMPLE EXPRESSIONS ###
@@ -74,9 +80,9 @@ operatorExpr = Ex.buildExpressionParser operatorsTable operandExpr'
 
 -- Everything that possible could be used in operators: everything but not function or assign
 -- Helper for `operatorExpr` parser
-operandExpr' =  try lambdaExprCall
-            <|> try atomicExpr
-            <|> try (parens operatorExpr)
+operandExpr' =  trySeveral [ lambdaExprCall
+                           , atomicExpr
+                           , (parens operatorExpr) ]
 
 -- Helper function, that detectes call (parens and comma-separated values)
 checkNextCalls :: Expression -> Parser Expression
@@ -103,18 +109,18 @@ functionExpr = do
   notFollowedBy $ (parens $ commaSep identifier)
   return $ Function selfRef args body
 
-callableExpr' =  try lambdaExprCall
-             <|> try functionExpr
-             <|> try variableExpr
-             <|> try builinFunctionExpr
-             <|> try (parens callableExpr')
+callableExpr' =  trySeveral [ lambdaExprCall
+                            , functionExpr
+                            , variableExpr
+                            , builinFunctionExpr
+                            , (parens callableExpr') ]
 
-nonCallableExpr' =  try operatorExpr
-                <|> try atomicExpr
-                <|> try (parens nonCallableExpr')
+nonCallableExpr' =  trySeveral [ operatorExpr
+                               , atomicExpr
+                               , (parens nonCallableExpr') ]
 
 simpleExpr :: Parser Expression
-simpleExpr = (try nonCallableExpr' <|> try callableExpr') >>= checkNextCalls
+simpleExpr = trySeveral [nonCallableExpr', callableExpr'] >>= checkNextCalls
 
 
 -- ########################
@@ -139,22 +145,22 @@ whileExpr withinFunc = do
 
 returnExpr = reserved "return" >> (Return <$> (optionMaybe simpleExpr))
 nonlocalExpr = reserved "nonlocal" >> (Nonlocal <$> identifier)
-funcOnlyExpr = try returnExpr <|> try nonlocalExpr
+funcOnlyExpr = trySeveral [returnExpr, nonlocalExpr]
 
 continueExpr = reserved "continue" >> return Continue
 breakExpr = reserved "break" >> return Break
-whileOnlyExpr = try breakExpr <|> try continueExpr
+whileOnlyExpr = trySeveral [breakExpr, continueExpr]
 
-flowExpr' wFunc wWhile =  try (ifExpr wFunc wWhile) 
-                      <|> try (whileExpr wFunc)
-                      <|> try importStmt
-                      <|> try assignExpr
+flowExpr' wFunc wWhile =  trySeveral [ (ifExpr wFunc wWhile)
+                                     , (whileExpr wFunc)
+                                     , importStmt
+                                     , assignExpr ]
 
 flowExpr :: Bool -> Bool -> Parser Statement
 flowExpr False False = flowExpr' False False
-flowExpr True False = try funcOnlyExpr <|> try (flowExpr' True False)
-flowExpr False True = try whileOnlyExpr <|> try (flowExpr' False True)
-flowExpr True True = try funcOnlyExpr <|> try whileOnlyExpr <|> try (flowExpr' True True)
+flowExpr True False = trySeveral [funcOnlyExpr, (flowExpr' True False)]
+flowExpr False True = trySeveral [whileOnlyExpr, (flowExpr' False True)]
+flowExpr True True = trySeveral [funcOnlyExpr, whileOnlyExpr, (flowExpr' True True)]
 
 
 -- ############################
@@ -169,7 +175,7 @@ endsWithBlock _                = False
 
 -- General parser to check all expressions available on top-level
 simpleStmt = Expression <$> simpleExpr
-stmt wFunc wWhile = try (flowExpr wFunc wWhile) <|> try simpleStmt
+stmt wFunc wWhile = trySeveral [(flowExpr wFunc wWhile), simpleStmt]
 
 -- Parser modificator that ensures what expressions should end with semicolon on top-level
 ensureSemi :: Parser Statement -> Parser Statement
@@ -184,8 +190,8 @@ toplevelProducer :: Parser Statement -> Parser [Statement]
 toplevelProducer = many . ensureSemi
 
 -- Blocks ( { } ) parsers for given allowed expressions
-blockExpr wFunc wWhile =  try (braces $ toplevelProducer (stmt wFunc wWhile))
-                      <|> try (blockExprAsSingle $ ensureSemi (stmt wFunc wWhile))
+blockExpr wFunc wWhile =  trySeveral [ (braces $ toplevelProducer (stmt wFunc wWhile))
+                                     , (blockExprAsSingle $ ensureSemi (stmt wFunc wWhile)) ]
 
 -- Helper function to allow single expression as block
 blockExprAsSingle :: Parser Statement -> Parser [Statement]
