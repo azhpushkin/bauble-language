@@ -38,7 +38,7 @@ printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
 builinFunctionExpr = trySeveral [printExpr, isNullExpr]
 
-variableExpr = identifier >>= (\var -> checkNextCalls (Variable var))
+variableExpr = withNextCalls (Variable <$> identifier)
 
 atomicExpr =  trySeveral [ doubleExpr
                          , integerExpr
@@ -85,14 +85,13 @@ operandExpr' =  trySeveral [ lambdaExprCall
                            , (parens operatorExpr) ]
 
 -- Helper function, that detectes call (parens and comma-separated values)
-checkNextCalls :: Expression -> Parser Expression
-checkNextCalls call = do
-  nextArgs <- optionMaybe (parens $ commaSep simpleExpr)
-  case nextArgs of
-    Nothing   -> return $ call
-    Just args -> checkNextCalls (Call call args)
+withNextCalls :: Parser Expression -> Parser Expression
+withNextCalls parser = do
+  expr <- parser
+  nextArgs <- many (parens $ commaSep simpleExpr)
+  return $ foldl (\callable -> \args -> (Call callable args)) expr nextArgs
 
-lambdaExprCall = (parens functionExpr) >>= checkNextCalls
+lambdaExprCall = withNextCalls (parens functionExpr)
 
 assignExpr = do
   var <- identifier
@@ -120,7 +119,7 @@ nonCallableExpr' =  trySeveral [ operatorExpr
                                , (parens nonCallableExpr') ]
 
 simpleExpr :: Parser Expression
-simpleExpr = trySeveral [nonCallableExpr', callableExpr'] >>= checkNextCalls
+simpleExpr = withNextCalls (trySeveral [nonCallableExpr', callableExpr'])
 
 
 -- ########################
