@@ -38,7 +38,8 @@ stringExpr = (Value . String) <$> stringLiteral
 
 printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
-builtinFunctionExpr = trySeveral [printExpr, isNullExpr]
+lengthExpr = reserved "length" >> (return $ Value $ BuiltinFunction Length)
+builtinFunctionExpr = trySeveral [printExpr, isNullExpr, lengthExpr]
 
 variableExpr = Variable <$> identifier
 

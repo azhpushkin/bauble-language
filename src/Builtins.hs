@@ -23,6 +23,7 @@ valueToString value =
 
     BuiltinFunction Print -> "<Built-in function print>"
     BuiltinFunction IsNull -> "<Built-in function isnull>"
+    BuiltinFunction Length -> "<Built-in function length>"
 
     Array values -> ("[" ++ intercalate ", " (map valueToString values) ++ "]")
 
@@ -36,6 +37,13 @@ proceedBuiltin IsNull [v] =
     _    -> return (Boolean True)
 proceedBuiltin IsNull args =
   error $ "isnull expected single argument, but got " ++ show args ++ "!"
+
+proceedBuiltin Length [v] =
+  case v of
+    Array vs -> return (Integer (fromIntegral (length vs)))
+    other    -> error ("Not array passed to length() function: " ++ show other)
+proceedBuiltin Length args =
+  error $ "length expected single argument, but got " ++ show args ++ "!"
 
 
 

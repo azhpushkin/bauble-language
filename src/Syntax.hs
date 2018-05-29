@@ -5,6 +5,7 @@ import qualified Data.Map.Strict as Map
 
 data BuiltinFunction = Print
                      | IsNull
+                     | Length
                      deriving (Show, Ord, Eq)
 
 data Value = Integer Integer

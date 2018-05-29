@@ -16,6 +16,7 @@ Basic features:
 * Simple bool and numbers operators
 * Double and rational numbers
 * First-class functions (lambda support)
+* Arrays
 
 Some more specific examples could be found in the [examples](examples) directory.
 
@@ -23,8 +24,8 @@ Some more specific examples could be found in the [examples](examples) directory
 TODO:
 * Write down Backus-Naur form
   (who cares? but could be great for course-work documentation)
-* optimize closures (PRIORITY)
-* Write down details of Syntax analisys and evaluation rules
+* optimize closures (PL part 2 course)
+* Write down details of Syntax analysis and evaluation rules
 * Error-handling of evaluation
 * executable options
 * try to optimize detection of chained calls and subscriptions

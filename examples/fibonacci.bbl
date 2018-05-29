@@ -39,3 +39,4 @@ fibonacciList = function(n) {
 print(fibonacciRecursive(10));
 print(fibonacciIterative(10));
 print("First 10 numbers of fibonacci are:", fibonacciList(10));
+print("Is really 10? ", length(fibonacciList(10)) == 10);
