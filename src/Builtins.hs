@@ -27,11 +27,7 @@ valueToString value =
     Array values -> ("[" ++ intercalate ", " (map valueToString values) ++ "]")
 
 proceedBuiltin :: BuiltinFunction -> [Value] -> IO (Value)
-
-proceedBuiltin Print [] = putStrLn "" >> return Null
-proceedBuiltin Print (value:rest) = do
-  putStr $ (valueToString value)
-  proceedBuiltin Print rest
+proceedBuiltin Print values = putStrLn (unwords (map valueToString values)) >> return Null
 
 
 proceedBuiltin IsNull [v] =

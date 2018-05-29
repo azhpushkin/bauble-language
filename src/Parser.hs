@@ -69,8 +69,8 @@ numberOperatorsTable = [ [ unary  "-"  Negate]
                          , binary "-"  Minus          Ex.AssocLeft]
                        , [ binary "<"  Less           Ex.AssocNone
                          , binary "<=" LessOrEqual    Ex.AssocNone
-                         , binary "<"  Greater        Ex.AssocNone
-                         , binary "<"  GreaterOrEqual Ex.AssocNone
+                         , binary ">"  Greater        Ex.AssocNone
+                         , binary ">=" GreaterOrEqual Ex.AssocNone
                          , binary "==" Equal          Ex.AssocNone
                          , binary "!=" NotEqual       Ex.AssocNone] ]
 

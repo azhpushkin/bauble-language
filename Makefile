@@ -2,7 +2,7 @@ all: repl
 
 
 fast:
-	stack build --fast --force-dirty
+	stack build --fast
 	cp .stack-work/dist/x86_64-linux-tinfo6-nopie/Cabal-2.0.1.0/build/bauble-exe/bauble-exe ./
 
 build:

@@ -85,11 +85,13 @@ runExpressions env currCall currWhile stmts = do
             (Boolean False) -> return (env, Nothing)
         Nothing -> return (env, if currCall then (Just Null) else Nothing)
 
-    (Expression e):exprs' -> (evalExpression e env) >>= (\_ -> return (env, Nothing))
+    (Expression e):exprs' -> do
+      value <- (evalExpression e env)
+      runExpressions env currCall currWhile exprs'
 
     (Assign var expr):exprs' -> do
       value  <- (evalExpression expr env)
-      return (addToEnv var value env, Nothing)
+      runExpressions (addToEnv var value env) currCall currWhile exprs'
 
     (Return (Just expr)):_ -> do
       value  <- (evalExpression expr env)
