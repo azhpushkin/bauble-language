@@ -3,6 +3,7 @@
 module Parser where
 
 import Text.Parsec
+import qualified Text.Parsec.Error as Error
 import Text.Parsec.String (Parser)
 import Data.List (foldl')
 
@@ -54,7 +55,7 @@ atomicExpr =  trySeveral [ doubleExpr
 -- ### SIMPLE EXPRESSIONS ###
 -- ##########################
 
-arrayExpr = (Value . Array) <$> (brackets $ commaSep expression)
+arrayExpr = ArrayDeclare <$> (brackets $ commaSep expression)
 
 -- OPERATORS TABLE
 
@@ -235,5 +236,13 @@ contents p = do
   return r
 
 -- Parse given string or return an error
-parseToplevel :: String -> Either ParseError [Statement]
+parseToplevel :: String -> Either Parser.ParseError [Statement]
 parseToplevel s = parse (contents $ toplevelProducer (statement False False)) "<stdin>" s
+
+
+-- ### ERROR-RELATED FUNCTIONS ###
+
+-- This is done make ParseError visible after Parser.hs import
+-- Some kind of encapsulation
+-- (only this file really knows what ParseError is)
+type ParseError = Error.ParseError

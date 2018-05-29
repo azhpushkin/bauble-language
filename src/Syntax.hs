@@ -17,17 +17,18 @@ data Value = Integer Integer
            -- Closure is never created directly,
            -- this is the result of function declaration
            | Closure (Maybe String)  -- Optional function name
-                     (Map.Map String Value)  -- Saved environment
+                     (Map.Map String Value)  -- Saved environment, synonym to Env.hs declaration
                      [String]  -- List of argument names
                      [Statement]  -- Function body
            | BuiltinFunction BuiltinFunction  -- Functions like print, length
 
-           | Array [Expression]
+           | Array [Value]  -- result of ArrayDeclare expr
            deriving (Show, Ord, Eq)
 
 data Expression = Value Value
                 | Variable String  -- name of variable
                 | Call Expression [Expression]  -- Callable and arguments
+                | ArrayDeclare [Expression]
 
                 -- Function declaration expression
                 | Function (Maybe String)  -- Optional name of function

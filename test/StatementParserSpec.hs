@@ -2,7 +2,6 @@
 
 module StatementParserSpec where
 import Data.Either
-import Text.Parsec
 import Test.Hspec
 
 import Parser

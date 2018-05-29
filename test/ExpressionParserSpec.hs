@@ -4,14 +4,14 @@ module ExpressionParserSpec where
 
 import Data.Either
 import Data.List
-import Text.Parsec
+import qualified Text.Parsec as P
 import Test.Hspec
 
 import Parser
 import Syntax
 
-expressionParser :: String -> Either ParseError Expression
-expressionParser input = parse (contents expression) "stdin" input
+expressionParser :: String -> Either P.ParseError Expression
+expressionParser input = P.parse (contents expression) "stdin" input
 
 shouldParseTo (expressionParser -> Left err) expected = error $ "Error occured! " ++ show err
 shouldParseTo (expressionParser -> Right expr) expected = expr `shouldBe` expected
@@ -71,7 +71,7 @@ spec = do
       "(function () {}) ()  ()" `shouldParseTo` (Call (Call (Function Nothing [] []) []) [])
       shouldFail "function () {} ();"
 
-    let array = (Value . Array) :: [Expression] -> Expression
+    let array = ArrayDeclare :: [Expression] -> Expression
     it "Simple array expressions" $ do
       "[]" `shouldParseTo` (array [])
       "[1]" `shouldParseTo` (array [(Value $ Integer 1)])
