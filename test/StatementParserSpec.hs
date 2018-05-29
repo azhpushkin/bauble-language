@@ -91,14 +91,12 @@ spec = do
       let programText = "while (true) function() break;"
       shouldFail programText
 
-    it "9. `nonlocal` and 'return` not allowed outside of function body" $ do
-      shouldFail "nonlocal somevar;"
+    it "9. 'return` not allowed outside of function body" $ do
       shouldFail "return;"
 
-    it "10. `nonlocal` and 'return` allowed inside of function body" $ do
+    it "10. 'return` allowed inside of function body" $ do
       let withBody body = (Expression (Function Nothing [] body))
 
-      "function () {nonlocal somevar;}" `shouldParseTo` (withBody [Nonlocal "somevar"])
       "function () {return somevar;}" `shouldParseTo` (withBody
                                                             [Return
                                                               (Just $ Variable "somevar")])

@@ -16,7 +16,7 @@ lexer = Tok.makeTokenParser languageDef
     names = ["true", "false", "null",  -- predefined values
              "if", "else",  -- if-expression
              "import", "as",  -- imports
-             "function", "return",  "nonlocal", -- function declaration
+             "function", "return", -- function declaration
              "while", "break", "continue",  -- while-expression
              "print", "isnull"  -- builtin functions
             ]

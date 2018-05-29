@@ -50,7 +50,6 @@ data Statement = Expression Expression
 
                -- Function body only
                | Return (Maybe Expression)
-               | Nonlocal String
 
                -- While loop body only
                | Continue

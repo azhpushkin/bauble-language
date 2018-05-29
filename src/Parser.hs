@@ -174,8 +174,7 @@ whileExpr withinFunc = do
 
 
 returnExpr = reserved "return" >> (Return <$> (optionMaybe expression))
-nonlocalExpr = reserved "nonlocal" >> (Nonlocal <$> identifier)
-funcOnlyExpr = trySeveral [returnExpr, nonlocalExpr]
+funcOnlyExpr = trySeveral [returnExpr]
 
 continueExpr = reserved "continue" >> return Continue
 breakExpr = reserved "break" >> return Break
