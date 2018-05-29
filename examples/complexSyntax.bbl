@@ -18,7 +18,7 @@ function() {
     return 1;
 }
 
-// 4. `while`, `if` and `function` expressions with blocks without braces
+// 4. `while`, `if` expressions with blocks without braces
 
 foo = function()
   while(false)
