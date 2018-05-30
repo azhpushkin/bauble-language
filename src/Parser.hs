@@ -155,12 +155,6 @@ expression = withNext (trySeveral [nonCallableExpr', callableExpr'])
 -- ### FLOW EXPRESSIONS ###
 -- ########################
 
-importStmt = do
-  reserved "import"
-  path <- identifier `sepBy1` (dot >> notFollowedBy whiteSpace)
-  qualifier <- optionMaybe (reserved "as" >> identifier)
-  return (Import path qualifier)
-
 ifExpr withinFunc withinWhile = do
   reserved "if"
   conditional <- parens expression
@@ -184,7 +178,6 @@ whileOnlyExpr = trySeveral [breakExpr, continueExpr]
 
 flowExpr' wFunc wWhile =  trySeveral [ (ifExpr wFunc wWhile)
                                      , (whileExpr wFunc)
-                                     , importStmt
                                      , assignExpr ]
 
 flowExpr :: Bool -> Bool -> Parser Statement

@@ -127,20 +127,3 @@ spec = do
       "if (1) {}" `shouldParseTo` (If (Value $ Integer 1) [] Nothing)
       "if (1) {} else {}" `shouldParseTo` (If (Value $ Integer 1) [] (Just []))
       "while (1) {}" `shouldParseTo` (While (Value $ Integer 1) [])
-
-    it "13. Bad `import` statement in differens variations" $ do
-      shouldFail "import;"
-      shouldFail "import .;"
-      shouldFail "import .something;"
-      shouldFail "import something.more.;"
-
-      shouldFail "import something as .;"
-      shouldFail "import something.another as .name;"
-      shouldFail "import something.another name;"
-      shouldFail "import something.another as name.name;"
-
-    it "14. Correct `import` statement in differens variations" $ do
-      "import module;" `shouldParseTo` (Import ["module"] Nothing)
-      "import module.more;" `shouldParseTo` (Import ["module", "more"] Nothing)
-      "import some.x as somename;" `shouldParseTo` (Import ["some", "x"] (Just "somename"))
-      "import some as somename;" `shouldParseTo` (Import ["some"] (Just "somename"))

@@ -118,5 +118,3 @@ runExpressions env currCall currWhile stmts = do
             runExpressions newEnv currCall currWhile exprs'
         (Boolean False) -> runExpressions env currCall currWhile exprs'
         _ -> error $ "Condition of while-expression is not boolean but " ++ show condValue
-
-    (Import _ _ ):_ -> error "Imports are not implemented!"
