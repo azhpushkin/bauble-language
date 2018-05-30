@@ -14,11 +14,11 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    ["repl"]      -> runREPL
-    ["ast"]       -> runASTDebug
-    ["ast", fname]       -> parseFileAST fname
-    [fname]       -> parseFile fname >> return ()
-    _             -> help
+    ["repl"]       -> runREPL
+    ["ast"]        -> runASTDebug
+    ["ast", fname] -> parseFileAST fname
+    [fname]        -> parseFile fname >> return ()
+    _              -> help
 
 help :: IO ()
 help = putStr $ unlines
@@ -37,20 +37,21 @@ runASTDebug = runInputT defaultSettings loop
     minput <- getInputLine "ready> "
     case minput of
       Nothing    -> outputStrLn "Goodbye."
-      Just input -> (liftIO $ (parse input) >>= (\ast -> (pPrint ast >> return ()))) >> loop
+      Just input -> (liftIO $ (parse input) >>=
+                      (\ast -> (pPrint ast >> return ()))) >> loop
 
 parseFileAST file = do
   program  <- readFile file
-  exprs <- parse program
-  putStrLn $ "----- AST of " ++ file ++ " -----"
+  exprs    <- parse program
+  putStrLn ("----- AST of " ++ file ++ " -----")
   pPrint exprs
-  putStrLn $ "---------- END ----------"
+  putStrLn ("---------- END ----------")
 
         
 
 processLine :: String -> Maybe Env -> IO(Maybe Env)
 processLine line env = do
-  exprs <- parse line
+  exprs  <- parse line
   newEnv <- startInterpreter env exprs
   return (Just newEnv)
 
@@ -67,8 +68,8 @@ runREPL = runInputT defaultSettings (loop Nothing)
 
 parseFile file = do
   program  <- readFile file
-  exprs <- parse program
-  putStrLn $ "----- Running " ++ file ++ " -----"
-  _ <- startInterpreter Nothing exprs
-  putStrLn $ "---------- END ----------"
+  exprs    <- parse program
+  putStrLn ("----- Running " ++ file ++ " -----")
+  _        <- startInterpreter Nothing exprs
+  putStrLn ("---------- END ----------")
 

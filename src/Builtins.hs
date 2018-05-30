@@ -1,49 +1,16 @@
 module Builtins where
 
-
 import Syntax
-import Data.List
 
-valueToString :: Value -> String
-valueToString value =
-  case value of
-    Integer i -> (show i)
-    Double d  -> (show d)
-    Rational r  -> (show r)
-
-    Boolean True -> "true"
-    Boolean False -> "false"
-
-    String s -> s
-
-    Null -> "null"
-
-    Closure (Just name) _ args _ -> ("<Closure \"" ++ name++ "\" with args " ++ show args ++ ">")
-    Closure Nothing     _ args _ -> ("<Closure with args " ++ show args ++ ">")
-
-    BuiltinFunction Print -> "<Built-in function print>"
-    BuiltinFunction IsNull -> "<Built-in function isnull>"
-    BuiltinFunction Length -> "<Built-in function length>"
-
-    Array values -> ("[" ++ intercalate ", " (map valueToString values) ++ "]")
 
 proceedBuiltin :: BuiltinFunction -> [Value] -> IO (Value)
+
 proceedBuiltin Print values = putStrLn (unwords (map valueToString values)) >> return Null
 
+proceedBuiltin IsNull [Null]  = return (Boolean True)
+proceedBuiltin IsNull [value] = return (Boolean False)
+proceedBuiltin IsNull args    = error ("isnull expected single argument, but got " ++ show args)
 
-proceedBuiltin IsNull [v] =
-  case v of
-    Null -> return (Boolean True)
-    _    -> return (Boolean True)
-proceedBuiltin IsNull args =
-  error $ "isnull expected single argument, but got " ++ show args ++ "!"
-
-proceedBuiltin Length [v] =
-  case v of
-    Array vs -> return (Integer (fromIntegral (length vs)))
-    other    -> error ("Not array passed to length() function: " ++ show other)
-proceedBuiltin Length args =
-  error $ "length expected single argument, but got " ++ show args ++ "!"
-
-
-
+proceedBuiltin Length [Array vs] = return (Integer (fromIntegral (length vs)))
+proceedBuiltin Length [other]    = error ("Not array passed to length() function: " ++ show other)
+proceedBuiltin Length args       = error ("length expected single argument, but got " ++ show args)

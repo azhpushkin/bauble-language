@@ -26,21 +26,27 @@ trySeveral (first:rest) = foldl (\fst -> \snd -> fst <|> try snd)
 -- Atomic expression is one that cannot be split up to more ones
 -- Example: 1, 1.1, true, false, null, foo (values and identifiers)
 
+-- Numbers
 integerExpr = (Value . Integer) <$> integer
-doubleExpr = (Value . Double) <$> float
+doubleExpr  = (Value . Double)  <$> float
 
-trueExpr = reserved "true" >> (return $ Value $ Boolean True)
+-- Booleans
+trueExpr =  reserved "true" >>  (return $ Value $ Boolean True)
 falseExpr = reserved "false" >> (return $ Value $ Boolean False)
 
+-- Null value
 nullExpr = reserved "null" >> (return $ Value Null)
 
+-- Strings
 stringExpr = (Value . String) <$> stringLiteral
 
+-- Built-in functions
 printExpr = reserved "print" >> (return $ Value $ BuiltinFunction Print)
 isNullExpr = reserved "isnull" >> (return $ Value $ BuiltinFunction IsNull)
 lengthExpr = reserved "length" >> (return $ Value $ BuiltinFunction Length)
 builtinFunctionExpr = trySeveral [printExpr, isNullExpr, lengthExpr]
 
+-- Variables
 variableExpr = Variable <$> identifier
 
 atomicExpr =  trySeveral [ doubleExpr
@@ -60,8 +66,8 @@ arrayExpr = ArrayDeclare <$> (brackets $ commaSep expression)
 
 -- OPERATORS TABLE
 
-binary s f assoc = Ex.Infix (reservedOp s >> return (BinaryOp f)) assoc
-unary s f = Ex.Prefix (reservedOp s >> return (UnaryOp f))
+binary s f assoc = Ex.Infix  (reservedOp s >> return (BinaryOp f)) assoc
+unary  s f       = Ex.Prefix (reservedOp s >> return (UnaryOp f))
 
 numberOperatorsTable = [ [ unary  "-"  Negate]
                        , [ binary "*"  Multiply       Ex.AssocLeft
@@ -107,17 +113,16 @@ withNextSubscripts parser = do
   return $ foldl' (\value -> \index -> (Subscript value index)) expr nextSubscripts
 
 withNext parser = do
-  originalExpr <- (lookAhead parser)
-  withCalls <- (lookAhead $ withNextCalls parser)
+  originalExpr   <- (lookAhead parser)
+  withCalls      <- (lookAhead $ withNextCalls parser)
   withSubscripts <- (lookAhead $ withNextSubscripts parser)
 
-  case withCalls /= originalExpr of
-    True  -> (withNext $ withNextCalls parser)
-    False ->
-      case withSubscripts /= originalExpr of
-        True  -> (withNext $ withNextSubscripts parser)
-        False -> parser
+  case (withCalls /= originalExpr, withSubscripts /= originalExpr) of
+    (True, _)     -> (withNext $ withNextCalls parser)
+    (False, True) -> (withNext $ withNextSubscripts parser)
+    _             -> parser
 
+-- Call expressions
 lambdaExprCall = withNextCalls (parens functionExpr)
 variableExprCall = withNextCalls variableExpr
 
@@ -131,8 +136,11 @@ assignExpr = do
 functionExpr = do
   reserved "function"
   selfRef <- optionMaybe identifier
-  args <- parens $ commaSep identifier
-  body <- (blockExpr True False)
+  args    <- parens $ commaSep identifier
+  body    <- (blockExpr True False)
+
+  -- Do not allow lambda calls without parentheses (function {} () ())
+  -- (function () {}) () should be used
   notFollowedBy $ (parens $ commaSep identifier)
   return $ Function selfRef args body
 
@@ -156,16 +164,18 @@ expression = withNext (trySeveral [nonCallableExpr', callableExpr'])
 -- ########################
 
 ifExpr withinFunc withinWhile = do
+  let elseParser = (reserved "else" >> (blockExpr withinFunc withinWhile))
+
   reserved "if"
   conditional <- parens expression
-  trueBranch <- (blockExpr withinFunc withinWhile)
-  falseBranch <- optionMaybe (reserved "else" >> (blockExpr withinFunc withinWhile))
+  trueBranch  <- (blockExpr withinFunc withinWhile)
+  falseBranch <- optionMaybe elseParser
   return $ If conditional trueBranch falseBranch
 
 whileExpr withinFunc = do
   reserved "while"
   conditional <- parens expression
-  body <- (blockExpr withinFunc True)
+  body        <- (blockExpr withinFunc True)
   return $ While conditional body
 
 
@@ -173,7 +183,7 @@ returnExpr = reserved "return" >> (Return <$> (optionMaybe expression))
 funcOnlyExpr = trySeveral [returnExpr]
 
 continueExpr = reserved "continue" >> return Continue
-breakExpr = reserved "break" >> return Break
+breakExpr    = reserved "break"    >> return Break
 whileOnlyExpr = trySeveral [breakExpr, continueExpr]
 
 flowExpr' wFunc wWhile =  trySeveral [ (ifExpr wFunc wWhile)
@@ -182,9 +192,9 @@ flowExpr' wFunc wWhile =  trySeveral [ (ifExpr wFunc wWhile)
 
 flowExpr :: Bool -> Bool -> Parser Statement
 flowExpr False False = flowExpr' False False
-flowExpr True False = trySeveral [funcOnlyExpr, (flowExpr' True False)]
-flowExpr False True = trySeveral [whileOnlyExpr, (flowExpr' False True)]
-flowExpr True True = trySeveral [funcOnlyExpr, whileOnlyExpr, (flowExpr' True True)]
+flowExpr True False  = trySeveral [funcOnlyExpr, (flowExpr' True False)]
+flowExpr False True  = trySeveral [whileOnlyExpr, (flowExpr' False True)]
+flowExpr True True   = trySeveral [funcOnlyExpr, whileOnlyExpr, (flowExpr' True True)]
 
 
 -- ############################
@@ -192,10 +202,10 @@ flowExpr True True = trySeveral [funcOnlyExpr, whileOnlyExpr, (flowExpr' True Tr
 -- ############################
 
 endsWithBlock :: Statement -> Bool
-endsWithBlock (While _ _)      = True
-endsWithBlock (If _ _ _)       = True
+endsWithBlock (While _ _)                   = True
+endsWithBlock (If _ _ _)                    = True
 endsWithBlock (Expression (Function _ _ _)) = True
-endsWithBlock _                = False
+endsWithBlock _                             = False
 
 -- General parser to check all expressions available on top-level
 simpleStmt = Expression <$> expression
@@ -206,16 +216,17 @@ ensureSemi :: Parser Statement -> Parser Statement
 ensureSemi exprParser = do
   newExpr <- exprParser
   case newExpr of
-    (endsWithBlock -> True)                 -> return newExpr
-    _                                       -> (reservedOp ";" >> return newExpr)
+    (endsWithBlock -> True) -> return newExpr
+    _                       -> (reservedOp ";" >> return newExpr)
 
 -- Parses many expressions of given parser with correct semicolons
 toplevelProducer :: Parser Statement -> Parser [Statement]
 toplevelProducer = many . ensureSemi
 
 -- Blocks ( { } ) parsers for given allowed expressions
-blockExpr wFunc wWhile =  trySeveral [ (braces $ toplevelProducer (statement wFunc wWhile))
-                                     , (blockExprAsSingle $ ensureSemi (statement wFunc wWhile)) ]
+blockExpr wFunc wWhile =
+  trySeveral [ (braces $ toplevelProducer (statement wFunc wWhile))
+             , (blockExprAsSingle $ ensureSemi (statement wFunc wWhile)) ]
 
 -- Helper function to allow single expression as block
 blockExprAsSingle :: Parser Statement -> Parser [Statement]

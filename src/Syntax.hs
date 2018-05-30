@@ -1,6 +1,7 @@
 module Syntax where
 
 import qualified Data.Map.Strict as Map
+import Data.List
 
 
 data BuiltinFunction = Print
@@ -77,3 +78,27 @@ data BinaryOp = Plus
 data UnaryOp = Not
              | Negate
              deriving (Show, Ord, Eq)
+
+
+valueToString :: Value -> String
+valueToString value =
+  case value of
+    Integer i -> (show i)
+    Double d  -> (show d)
+    Rational r  -> (show r)
+
+    Boolean True -> "true"
+    Boolean False -> "false"
+
+    String s -> s
+
+    Null -> "null"
+
+    Closure (Just name) _ args _ -> ("<Closure \"" ++ name++ "\" with args " ++ show args ++ ">")
+    Closure Nothing     _ args _ -> ("<Closure with args " ++ show args ++ ">")
+
+    BuiltinFunction Print -> "<Built-in function print>"
+    BuiltinFunction IsNull -> "<Built-in function isnull>"
+    BuiltinFunction Length -> "<Built-in function length>"
+
+    Array values -> ("[" ++ intercalate ", " (map valueToString values) ++ "]")
