@@ -1,0 +1,63 @@
+// Should be duplicated in test/ASTBuildingSpec.hs
+
+// 1. Empty `return` is allowed
+
+function() {return;}
+
+// 2. `return` in `if` expression, if without braces
+
+function () {
+  if (true) return true;
+  else return false;
+}
+
+// 3. `return` in `while` expression, while without braces
+
+function() {
+  while(false)
+    return 1;
+}
+
+// 4. `while`, `if` expressions with blocks without braces
+
+foo = function()
+  while(false)
+    if (true)
+      function () return true;
+    else
+      while (false)
+        false;
+
+// 5. Chained calls
+
+(x()(1)) (2)(3);
+
+// 6. `break` and `continue` allowed in if block
+
+while (true)
+  if (1) break;
+  else continue;
+
+// 7-8. `break` and `continue` not allowed in function inside while
+
+/* WARNING: THIS SHOULD FAIL, SO COMMENTED
+
+while (true)
+  function() break;
+
+while (true)
+  function() continue;
+
+*/
+
+// 9. Nested control-flow expressions, `return`, `break` and `continue` allowed
+
+function() {
+  while (true) {
+    if (true) {
+      return;
+      break;
+      continue;
+    }
+  }
+}

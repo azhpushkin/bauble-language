@@ -1,0 +1,17 @@
+# Intellij files
+.idea/
+*.iml
+
+# Haskell files
+
+.stack-work/
+bauble.cabal
+cabal.config
+*~
+
+# Dist folder
+out/
+
+# Executable
+
+

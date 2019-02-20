@@ -1,0 +1,42 @@
+fibonacciRecursive = function self(n) {
+    if (n < 2)
+        return n;
+    else
+        return (self (n - 1) + self (n - 2));
+};
+
+fibonacciIterative = function(n) {
+    if (n < 2) return 1;
+
+    i = 0;
+    res = 1;
+    prevRes = 1;
+    while (i < n - 2) {
+        temp = res;
+        res = res + prevRes;
+        prevRes = temp;
+        i = i + 1;
+    }
+    return res;
+};
+
+fibonacciList = function(n) {
+    if (n <= 0) {
+        print("Not able to for list for", n, "numbers!");
+        return null;
+    }
+    if (n == 1) {return [1];}
+    list = [1, 1];
+    n = n - 2;
+    while (n > 0) {
+        list = [list[0] + list[1]] + list;
+        n = n - 1;
+    }
+    return list;
+
+};
+
+print(fibonacciRecursive(10));
+print(fibonacciIterative(10));
+print("First 10 numbers of fibonacci are:", fibonacciList(10));
+print("Is really 10? ", length(fibonacciList(10)) == 10);
