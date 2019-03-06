@@ -1,0 +1,20 @@
+filter = function filter(func, array) {
+    res = [];
+    i = 0;
+    while ( i < length(array))
+    {
+        elem = array[i];
+        if (func(elem))
+            res = res + [elem];
+        
+        i = i + 1;
+    }
+    return res;
+};
+
+
+isPositive = function(v) {return v > 0;};
+
+x = [1, 2, -3, -5, 3];
+print(filter(isPositive, x));
+print(filter(function(v) {return v < 0;}, x));

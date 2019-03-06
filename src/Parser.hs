@@ -109,7 +109,7 @@ withNextCalls parser = do
 withNextSubscripts :: Parser Expression -> Parser Expression
 withNextSubscripts parser = do
   expr <- parser
-  nextSubscripts <- many (brackets integer)
+  nextSubscripts <- many (brackets expression)
   return $ foldl' (\value -> \index -> (Subscript value index)) expr nextSubscripts
 
 withNext parser = do

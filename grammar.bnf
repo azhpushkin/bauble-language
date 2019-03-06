@@ -1,0 +1,76 @@
+
+// Numbers
+<integerExpr> ::= <DEFAULT_INTEGERS>
+<doubleExpr> ::= <DEFAULT_INTEGERS> "." <DEFAULT_INTEGERS>
+
+// Booleans
+<trueExpr> ::= "true"
+<falseExpr> ::= "false"
+
+// Some more types
+<stringExpr> ::= " " " <STRING_LITERALS> " " "
+<nullExpr> ::= "null"
+
+// Builtin functions
+<printExpr> ::= "print"
+<isNullExpr> ::= "isnull"
+<lengthExpr> ::= "length"
+
+<builtinFunctionExpr> ::= <printExpr> | <isNullExpr> | <lengthExpr>
+
+<variableExpr> ::= <STRING_LITERALS>
+
+// Atomic expression - ones that cannot be split
+<atomicExpr> = <doubleExpr>
+             | <integerExpr>
+             | <trueExpr>
+             | <falseExpr>
+             | <nullExpr>
+             | <stringExpr>
+             | <builtinFunctionExpr>
+             | <variableExpr>
+             
+<commaSep> = <expr> | <expr> "," <commaSep>
+<arrayExpr> = "[]" | "[" <commaSep> "]"
+
+             
+<binaryOpExpr> ::= "-" | "+" | "*" | "/" | "<" | "<=" | "==" | ">=" | ">" | "!="
+<unaryOpExpr> ::= "not" | "and" | "or"
+<operatorExpr> ::= <unaryOpExpr> <operandExpr> | <operandExpr> <binaryOpExpr> <operandExpr>
+
+
+<operandExpr> ::= <lambdaExprCall> | <variableExprCall> | <atomicExpr> | <arrayExpr> | "(" <operatorExpr> ")"
+
+
+<argumentsExpr> ::= <variableExpr> | <variableExpr> "," <argumentsExpr>
+<functionExpr> ::= "function" <STRING_LITERALS> "(" {<argumentsExpr>} ")" "{" <blockExpr> "}"
+
+<lambdaExprCall> ::= "(" <functionExpr> ")" "(" {<commaSep} ")"
+<variableExprCall> ::= <variableExpr> "(" {<commaSep} ")"
+
+<assignExpr> ::= <variableExpr> "=" <expr>
+
+<expr> ::= <operatorExpr>
+         | <atomicExpr>
+         | <arrayExpr>
+         | <lambdaExprCall>
+         | <variableExprCall>
+         | <functionExpr>
+         | <variableExpr>
+         | <builtinFunctionExpr>
+         | "(" <expr> ")"
+         
+<returnExpr> ::= "return" <expr>
+<continueExpr> ::= "continue"
+<breakExpr> ::= "break"
+
+<ifExpr> ::= "if" "(" <commaSep> ")" "{" <blockExpr> "}" ["else" "{" blockExpr "}"]
+<whileExpr> ::= "while" "(" <commaSep> ")" "{" <blockExpr> "}"
+
+<flowExpr> ::= 
+
+
+<stmt> ::= <ifExpr> | <whileExpr> | <returnExpr> | <breakExpr> | <continueExpr> | <expr>
+
+<blockExpr> ::= <stmt> ";" | <stmt> ";" <blockExpr> | "{" <blockExpr> "}"
+

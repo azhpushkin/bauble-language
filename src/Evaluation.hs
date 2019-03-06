@@ -43,11 +43,11 @@ evalExpression (UnaryOp operator expr) env = do
 evalExpression (ArrayDeclare exprs) env = Array <$> (mapM (`evalExpression` env) exprs)
 
 -- TODO: Uncaught exceptions could happen
-evalExpression (Subscript expr index) env
-  | index < 0 = error ("Negative index " ++ show index ++ " not allowed!")
-  | otherwise = do
-    (Array values) <- (evalExpression expr env)
-    return $ values !! (fromIntegral index)
+evalExpression (Subscript expr indexExpr) env = do
+  (Integer i) <- (evalExpression indexExpr env)
+  (Array values) <- (evalExpression expr env)
+  return $ values !! (fromIntegral i)
+    
 
 evalExpression (Call expr argExprs) env = do
   callable <- (evalExpression expr env)

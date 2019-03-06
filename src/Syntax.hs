@@ -40,7 +40,7 @@ data Expression = Value Value
                 -- Operators and array subscription
                 | BinaryOp BinaryOp Expression Expression
                 | UnaryOp UnaryOp Expression
-                | Subscript Expression Integer
+                | Subscript Expression Expression
 
                 deriving (Show, Ord, Eq)
 
