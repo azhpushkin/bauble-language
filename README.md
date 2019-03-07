@@ -172,3 +172,79 @@ Follow to [examples](examples) folder for move examples of usage.
 
 
 ## How does it work under the hood
+
+Running the program consists of two steps:
+1) Parsing syntax to lexemes and AST code
+2) Executing produces AST code
+
+### How AST is generated
+
+Haskell [Parsec combinators](http://hackage.haskell.org/package/parsec) library is used.
+Given lexemes rules ([Lexer.hs](src/Lexer.hs)), library build simple lexemes parser, that
+is used later to describe how syntax looks. Syntactic constructions are given in [Syntax.hs](src/Syntax.hs) file.
+
+Rules for syntax are given in [Parser.hs](src/Parser.hs) and is also used to validate some
+more complex syntax rules. For example, parsec combinator `flowExpr` parses syntax depending
+on current state of parser and ensures `continue/break` are used only inside of `while`
+(and `return` is used inside function definition only).
+
+There is important distinction between `Expression` and `Statement` - expression could be
+evaluated to some result (i.e. operator or function call), and statement does not return
+anything and could be only **executed** (i.e. `while, if, return`)
+
+Some high-level overview of combinators:
+* `atomicExpr`  
+parses expressions that could not be split anymore: numbers, strings, bool etc.
+* `operatorExpr`  
+uses library's `buildExpressionParser` function to generate parser of operators for
+given table of operators (with associativity rules and priority)
+* `withNext`  
+allows chained calls and subscripts (i.e. `array[1][2](3, 4)(2)[2]`)
+* `expression`  
+parses expressions - statements that could be evaluated to some concrete value.
+Contains values and function definitions, calls, operators, subscripts and assignments
+(assignments return value of assignment to allow `a = b = 0` form)
+* `flowExpr`  
+parses statements depending on current position: whether inside of loop or
+function definition
+* `statement`  
+Most general one - parses all statements and expressions of the language
+* `ensureSemi`  
+Ensures semicolons are present or not present depending on statements
+* `contents`  
+Handles whitespaces and newlines and parses without dependency on them  
+* `parseToplevel`  
+Finally, last one - retrieves string and parses it with `contents` and `statement` combinators
+
+As a result, this parsing produces list of AST **STATEMENTS** that are executed later.
+### How AST is executed
+
+This one is split up to some steps too.  
+Most of the logic about this is contained in [Evaluation.hs](src/Evaluation.hs) file.
+In consists of two main functions:
+
+**`runExpressions`**  
+Executes expressions. Manages current execution context (loop / function call) and
+environment (defined in [Environment.hs](src/Environment.hs)).  
+Works in very simple way:
+* `if` blocks - check condition and add `if` or `else` statements to list of ones
+  to execute
+* `while` - check conditions and either drop loop statements (if condition is false)
+or launch another `runExpressions` and uses it's result env for future work
+* for a function call, just new `runExpressions` is started and its result is used
+* assignment just updates current flow
+* `return`, `continue` and `break` work correct because `runExpression` stores current
+call or loop so these statements are aware of execution context
+* other statements are quite straightforward
+
+**`evalExpression`**
+
+This one is very easy. Either evaluates function call (by calling `runExpressions`), 
+calculates operation based on [Operators.hs](src/Operators.hs) operators rules or
+performs array creation - lookup. Builtit functions results and behavior are described in
+[Builtins.hs](src/Builtins.hs).
+
+### Final step
+
+[Lib.hs](src/Lib.hs) defines two high-level functions for parsing and executing AST, and
+[Main.hs](app/Main.hs) defines handling of commands (`repl`, `file-ast` etc) via Lib.hs functions.
