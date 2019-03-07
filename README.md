@@ -1,5 +1,3 @@
-#### Simple programming languages
-
 ![Yeah, this is bauble](/icon.png?s=200)
   
 Dynamically typed imperative language with first-class functions.
@@ -42,7 +40,7 @@ Makefile commands:
 
 ## Language overview
 
-#### Supported types
+### Supported types
 
 **Numbers** are represented with 3 possible types: `integer`, `rational` and `double`
 with support of `+, -, /, *`  operators between all of them. Integers and double
@@ -111,7 +109,7 @@ array[1+2]  // Subscript
 [1, 2, 3] + [4, 5, 6]  // adding of arrays is supported
 ```  
 
-#### Control flow and other statements
+### Control flow and other statements
 
 There is some more well-known statements present:
 
@@ -152,7 +150,7 @@ while (something()) {
 }  
 ```
 
-#### These tricky semicolons
+### These tricky semicolons
 
 Rules for semicolons: all statements must end with semicolon,
 but ones that ends with block (`function`, `if`, `while`) don't.
@@ -171,3 +169,6 @@ if (true) a=1; else {b=2;}  // Same here
 ```  
 
 Follow to [examples](examples) folder for move examples of usage.
+
+
+## How does it work under the hood
