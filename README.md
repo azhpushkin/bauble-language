@@ -1,6 +1,6 @@
 ![Yeah, this is bauble](/icon.png?s=200)
   
-Dynamically typed imperative language with first-class functions.
+Dynamically typed interpreted imperative language with first-class functions.
 **Created for educational purposes.**
 
 ## Brief overview
@@ -176,6 +176,11 @@ Follow to [examples](examples) folder for move examples of usage.
 Running the program consists of two steps:
 1) Parsing syntax to lexemes and AST code
 2) Executing produces AST code
+
+Language is interpreted and dynamically typed, so there is no any static analysis
+and no type-checking before execution. Therefore, only some basic syntax checking is done
+done before execution (i.e. we cannot add function definitions) and all the type-checks
+and value-checks are done in runtime, as well as coercion of types.
 
 ### How AST is generated
 
